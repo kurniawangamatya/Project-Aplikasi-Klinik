@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, addDoc, serverTimestamp, updateDoc, doc, deleteDoc, orderBy, getDocs, where } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from '../lib/firebase';
+import { db, handleFirestoreError, OperationType, collection, query, onSnapshot, addDoc, serverTimestamp, updateDoc, doc, deleteDoc, orderBy, getDocs, where } from '../lib/firebase';
 import { useAuth } from '../hooks/useAuth';
 import { 
   Users, DollarSign, Calendar, Plus, Search, 
@@ -130,7 +129,7 @@ export default function Payroll({ setTab }: PayrollProps) {
         
         const attendanceSnap = await getDocs(attendanceQuery);
         attendanceSnap.docs.forEach(doc => {
-          const d = doc.data();
+          const d = doc.data() as any;
           totalHours += (d.hoursWorked || 0);
           if (d.overtimeStatus === 'approved' && d.overtimeHours) {
             totalOvertimeHours += d.overtimeHours;
@@ -150,7 +149,7 @@ export default function Payroll({ setTab }: PayrollProps) {
 
         const kpiSnap = await getDocs(kpiQuery);
         kpiSnap.docs.forEach(doc => {
-          const data = doc.data();
+          const data = doc.data() as any;
           if (data.date) {
             const entryDate = data.date.toDate ? data.date.toDate() : new Date(data.date);
             if (entryDate >= startOfMonth && entryDate <= endOfMonth) {
@@ -170,7 +169,7 @@ export default function Payroll({ setTab }: PayrollProps) {
         const userRole = employee.role?.toLowerCase() || '';
 
         salesSnap.docs.forEach(doc => {
-          const sale = doc.data();
+          const sale = doc.data() as any;
           let isMatch = false;
           let commField = '';
 
@@ -287,7 +286,7 @@ export default function Payroll({ setTab }: PayrollProps) {
         );
         const attendanceSnap = await getDocs(attendanceQuery);
         attendanceSnap.docs.forEach(doc => {
-          const d = doc.data();
+          const d = doc.data() as any;
           totalHours += (d.hoursWorked || 0);
           if (d.overtimeStatus === 'approved' && d.overtimeHours) {
             totalOvertimeHours += d.overtimeHours;
@@ -307,7 +306,7 @@ export default function Payroll({ setTab }: PayrollProps) {
         );
         const kpiSnap = await getDocs(kpiQuery);
         kpiSnap.docs.forEach(doc => {
-          const data = doc.data();
+          const data = doc.data() as any;
           if (data.date) {
             const entryDate = data.date.toDate ? data.date.toDate() : new Date(data.date);
             if (entryDate >= startOfMonth && entryDate <= endOfMonth) {
@@ -326,7 +325,7 @@ export default function Payroll({ setTab }: PayrollProps) {
         const userRole = employee.role?.toLowerCase() || '';
 
         salesSnap.docs.forEach(doc => {
-          const sale = doc.data();
+          const sale = doc.data() as any;
           let isMatch = false;
           let commField = '';
 

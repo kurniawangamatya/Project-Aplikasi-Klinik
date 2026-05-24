@@ -13,6 +13,7 @@ import MemberReport from './components/MemberReport';
 import PatientData from './components/PatientData';
 import KPICenter from './components/KPICenter';
 import Settings from './components/Settings';
+import GlowingWorldMap from './components/GlowingWorldMap';
 import { db, collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, deleteDoc, doc, updateDoc, handleFirestoreError, OperationType } from './lib/firebase';
 import { Board } from './types';
 import { LogIn, Plus, Layout as LayoutIcon, Loader2, AlertCircle, ExternalLink, Mail, Lock, Sparkles, ShieldCheck } from 'lucide-react';
@@ -121,281 +122,147 @@ function AppContent() {
 
     const loginVibe = customizationSettings?.loginVibe || 'minimal_slate';
     const loginSubtitleText = customizationSettings?.loginSubtitle || 'Operasional Keuangan Digital | AI Studio Secure Edition';
-    const brandColor = customizationSettings?.primaryBrandColor || '#3B82F6';
+    const brandColor = customizationSettings?.primaryBrandColor || '#8B5CF6';
     const hideQuickLogin = customizationSettings?.hideQuickLogin || false;
     const showCredit = customizationSettings?.showDeveloperCredit !== false;
 
-    // Vibe theme classes
-    let vibeBgClass = 'bg-zinc-950 text-white';
-    let cardClass = 'bg-zinc-900 border-zinc-800 shadow-[0_64px_128px_-32px_rgba(0,0,0,0.8)]';
-    let sidePanelBg = 'bg-zinc-900/50 border-zinc-850';
-    let accentGradientText = 'bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400';
-
-    if (loginVibe === 'cosmic_space') {
-      vibeBgClass = 'bg-slate-950 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-indigo-950/45 via-zinc-950 to-slate-950 text-white';
-      cardClass = 'bg-zinc-900/80 backdrop-blur-xl border-indigo-950/40 shadow-[0_64px_128px_-32px_rgba(30,12,74,0.6)]';
-      sidePanelBg = 'bg-indigo-95/5 backdrop-blur-xl border-indigo-900/30';
-      accentGradientText = 'bg-gradient-to-r from-violet-400 via-fuchsia-300 to-indigo-300';
-    } else if (loginVibe === 'clinic_emerald') {
-      vibeBgClass = 'bg-zinc-950 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-emerald-950/20 via-zinc-950 to-zinc-950 text-white';
-      cardClass = 'bg-zinc-900/90 backdrop-blur-lg border-emerald-900/30 shadow-[0_64px_128px_-32px_rgba(6,78,59,0.3)]';
-      sidePanelBg = 'bg-emerald-950/10 backdrop-blur-md border-emerald-905/10';
-      accentGradientText = 'bg-gradient-to-r from-emerald-400 to-teal-300';
-    } else if (loginVibe === 'warm_sunset') {
-      vibeBgClass = 'bg-zinc-950 bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-amber-950/20 via-zinc-950 to-zinc-950 text-white';
-      cardClass = 'bg-zinc-900/90 backdrop-blur-lg border-amber-900/20 shadow-[0_64px_128px_-32px_rgba(115,115,115,0.4)]';
-      sidePanelBg = 'bg-amber-950/5 backdrop-blur-md border-amber-900/10';
-      accentGradientText = 'bg-gradient-to-r from-amber-400 to-rose-300';
-    } else if (loginVibe === 'high_contrast_glass') {
-      vibeBgClass = 'bg-zinc-900 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-zinc-800 via-zinc-900 to-black text-white';
-      cardClass = 'bg-zinc-950/70 backdrop-blur-2xl border-zinc-700/60 shadow-[0_80px_160px_-40px_rgba(0,0,0,0.9)]';
-      sidePanelBg = 'bg-zinc-950/30 backdrop-blur-xl border-zinc-800';
-      accentGradientText = 'bg-gradient-to-r from-white via-zinc-300 to-zinc-400';
-    }
+    // Fixed High-fidelity purple theme by default for premium visual response
+    const vibeBgClass = 'bg-[#030014] text-white';
+    const glassCardClass = 'bg-zinc-950/70 border border-violet-500/15 backdrop-blur-3xl shadow-[0_0_80px_-10px_rgba(139,92,246,0.25)]';
+    const accentGradientText = 'bg-gradient-to-r from-violet-400 via-fuchsia-400 to-indigo-400';
 
     const loginPresets = [
-      { role: 'admin', title: 'Admin', name: 'Alun Pratama', color: 'border-blue-500/20 hover:border-blue-500 text-blue-400 bg-blue-500/5', initial: 'AD' },
-      { role: 'owner', title: 'Owner', name: 'drg. Diana Sp.KGA', color: 'border-purple-500/20 hover:border-purple-500 text-purple-400 bg-purple-500/5', initial: 'OW' },
-      { role: 'keuangan', title: 'Finance', name: 'Rere Kasir', color: 'border-emerald-500/20 hover:border-emerald-500 text-emerald-400 bg-emerald-500/5', initial: 'FN' },
-      { role: 'perawat', title: 'Nurse', name: 'Suster Nina', color: 'border-orange-500/20 hover:border-orange-505 text-orange-400 bg-orange-500/5', initial: 'NS' }
+      { role: 'admin', title: 'ADMIN PORTAL', name: 'Alun Pratama', color: 'border-blue-500/20 hover:border-blue-500/50 text-blue-400 bg-blue-500/5 hover:bg-blue-500/10', initial: 'AD', glow: 'shadow-[0_0_15px_rgba(59,130,246,0.15)]' },
+      { role: 'owner', title: 'OWNER PORTAL', name: 'drg. Diana Sp.KGA', color: 'border-purple-500/20 hover:border-purple-500/50 text-purple-400 bg-purple-500/5 hover:bg-purple-500/10', initial: 'OW', glow: 'shadow-[0_0_15px_rgba(168,85,247,0.15)]' },
+      { role: 'keuangan', title: 'FINANCE GATE', name: 'Rere Kasir', color: 'border-emerald-500/20 hover:border-emerald-500/50 text-emerald-400 bg-emerald-500/5 hover:bg-emerald-500/10', initial: 'FN', glow: 'shadow-[0_0_15px_rgba(168,85,247,0.15)]' },
+      { role: 'perawat', title: 'STAFF SYSTEM', name: 'Suster Nina', color: 'border-orange-500/20 hover:border-orange-500/50 text-orange-400 bg-orange-500/5 hover:bg-orange-500/10', initial: 'NS', glow: 'shadow-[0_0_15px_rgba(249,115,22,0.15)]' }
     ];
 
     return (
       <div className={`min-h-screen ${vibeBgClass} flex items-center justify-center p-4 sm:p-8 font-sans transition-colors duration-700 relative overflow-hidden`}>
-        {/* Backdrop Decorative Glows */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-blue-600/10 blur-[130px] pointer-events-none animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-purple-600/10 blur-[130px] pointer-events-none animate-pulse" style={{ animationDelay: '2s' }} />
+        {/* Ambient Grid Wallpaper */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-950/40 via-[#030014] to-[#010103] z-0" />
+        
+        {/* Soft Background Drift Particles using hardware-accelerated CSS animations */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+          <div className="absolute top-[10%] left-[15%] w-1.5 h-1.5 rounded-full bg-violet-400 opacity-20 animate-pulse" />
+          <div className="absolute top-[35%] right-[25%] w-2 h-2 rounded-full bg-fuchsia-400 opacity-25 animate-pulse" style={{ animationDelay: '1s' }} />
+          <div className="absolute bottom-[20%] left-[45%] w-1 h-1 rounded-full bg-indigo-400 opacity-30 animate-pulse" style={{ animationDelay: '2.5s' }} />
+          <div className="absolute top-[60%] left-[8%] w-2 h-2 rounded-full bg-violet-500 opacity-15 animate-pulse" style={{ animationDelay: '1.5s' }} />
+          <div className="absolute bottom-[15%] right-[12%] w-1.5 h-1.5 rounded-full bg-fuchsia-500 opacity-20 animate-pulse" style={{ animationDelay: '3s' }} />
+        </div>
+
+        {/* Outer Grid lines overlay */}
+        <div className="absolute inset-0 bg-[#030014] bg-[linear-gradient(to_right,#0c0a24_1px,transparent_1px),linear-gradient(to_bottom,#0c0a24_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-20 pointer-events-none z-0" />
 
         <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
-          {/* LEFT PANEL: Professional Clinical Operational Showcase */}
+          {/* LEFT PANEL: Professional Clinical Operational Showcase & Glowing World Map */}
           <motion.div 
-            initial={{ opacity: 0, x: -40 }}
+            initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8 }}
-            className="lg:col-span-6 space-y-8 hidden lg:block pr-8"
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="lg:col-span-6 flex flex-col justify-center items-center hidden lg:flex pr-6"
           >
-            <div className="flex items-center gap-4">
-              <div 
-                className="w-16 h-16 rounded-[1.75rem] flex items-center justify-center shadow-lg rotate-6 hover:rotate-0 transition-all duration-300"
-                style={{ backgroundColor: brandColor }}
-              >
-                <LayoutIcon className="text-white w-8 h-8" />
-              </div>
-              <div>
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Platform Portal</span>
-                <h2 className="text-3xl font-black text-white tracking-tighter leading-none mt-0.5">{clinicName}</h2>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <h1 className="text-4xl sm:text-5xl font-black tracking-tight leading-[1.05] text-white">
-                Operasional Digital <br />
-                <span className={`bg-clip-text text-transparent ${accentGradientText}`}>
-                  Efisien & Transparan
-                </span>
-              </h1>
-              <p className="text-zinc-400 text-sm leading-relaxed max-w-md font-medium">
-                Sistem pengelolaan transaksi kasir, log aktivitas harian dokter, persetujuan lembur perawat, serta laporan arus kas digital dalam satu dasbor terintegrasi.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className={`p-5 rounded-3xl border ${sidePanelBg} transition-all hover:scale-[1.02]`}>
-                <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 mb-3">
-                  <ShieldCheck className="w-4 h-4" />
-                </div>
-                <h4 className="text-xs font-black text-zinc-200 uppercase tracking-wider">Akses Terenkripsi</h4>
-                <p className="text-[10px] text-zinc-500 font-bold mt-1 leading-relaxed">Firebase Securing Guard membatasi menu berdasarkan hak akses staf.</p>
-              </div>
-
-              <div className={`p-5 rounded-3xl border ${sidePanelBg} transition-all hover:scale-[1.02]`}>
-                <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400 mb-3">
-                  <Sparkles className="w-4 h-4" />
-                </div>
-                <h4 className="text-xs font-black text-zinc-200 uppercase tracking-wider">Lembur & Audit</h4>
-                <p className="text-[10px] text-zinc-500 font-bold mt-1 leading-relaxed">Penghitungan komisi dan pengajuan bonus lembur otomatis.</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 pt-4 text-xs font-bold text-zinc-650">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[10px] uppercase font-black tracking-widest text-zinc-600">Sistem Online & Beroperasi Normal</span>
+            {/* Glowing Map Container Card */}
+            <div className="p-3 w-full rounded-[2.5rem] bg-zinc-950/20 border border-violet-950/10 backdrop-blur-md">
+              <GlowingWorldMap />
             </div>
           </motion.div>
 
           {/* RIGHT PANEL: Elegant Secure Login Form */}
           <motion.div 
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
             className="lg:col-span-6 w-full max-w-md mx-auto"
           >
-            <div className={`p-8 sm:p-10 rounded-[3.5rem] border ${cardClass} relative overflow-hidden`}>
-              <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-700 via-indigo-500 to-purple-500" />
+            <div className={`p-8 sm:p-10 rounded-[3rem] ${glassCardClass} relative overflow-hidden`}>
+              {/* Premium top aesthetic line */}
+              <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-violet-600 via-fuchsia-500 to-indigo-600" />
               
               <div className="text-center mb-6">
-                {/* Compact branding on mobile */}
-                <div className="lg:hidden flex items-center justify-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
-                    <LayoutIcon className="text-white w-5 h-5" />
-                  </div>
-                  <h1 className="text-xl font-black text-white tracking-tight">{clinicName}</h1>
-                </div>
-
-                <h3 className="text-2xl font-black tracking-tight text-white mb-1">Selamat Datang</h3>
-                <p className="text-zinc-400 text-xs font-medium leading-relaxed">
+                <span className="text-[9px] font-mono tracking-[0.25em] text-violet-400 uppercase font-black">Secure Authentication</span>
+                <h3 className="text-2xl font-black tracking-tight text-white mt-1">Masuk Sistem</h3>
+                <p className="text-zinc-400 text-xs font-medium mt-1 leading-relaxed">
                   {loginSubtitleText}
                 </p>
               </div>
 
               {loginError && (
                 <motion.div 
-                  initial={{ scale: 0.95, opacity: 0 }}
+                  initial={{ scale: 0.98, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  className="mb-6 p-4 bg-red-950/40 border border-red-800/50 text-left rounded-2xl relative overflow-hidden text-zinc-350"
+                  className="mb-4 p-4 bg-red-950/30 border border-red-900/40 text-left rounded-2xl relative overflow-hidden text-zinc-300"
                   id="login-popup-error-banner"
                 >
                   <div className="flex gap-3">
-                    <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" id="login-error-icon" />
+                    <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" id="login-error-icon" />
                     <div className="flex-1">
                       <h4 className="text-xs font-bold text-red-400" id="login-error-title">
-                        Kendala Masuk Akun
+                        Otentikasi Gagal atau Limit Quota
                       </h4>
-                      <p className="text-zinc-405 text-[10px] mt-1 leading-relaxed" id="login-error-desc">
-                        OAuth browser diblokir di frame ini. Gunakan **Akun Staf Demo** atau isi **Form email** di bawah dengan aman.
+                      <p className="text-zinc-400 text-[10px] mt-0.5 leading-relaxed" id="login-error-desc">
+                        OAuth browser tidak mengijinkan frame, atau database tersinkronisasi offline. Silakan masuk menggunakan **Akun Demo Cepat** atau gunakan **Email Staf** di bawah ini.
                       </p>
                     </div>
                   </div>
                 </motion.div>
               )}
 
-              {/* Toggle views or unified container */}
-              {!isEmailSignIn ? (
-                <div className="space-y-6">
-                  {/* Preset Fast Login Section ( Netflix style select account ) */}
-                  {!hideQuickLogin && (
-                    <div className="space-y-3 bg-zinc-950/40 border border-zinc-800/50 p-4.5 rounded-3xl">
-                      <span className="text-[9px] font-black uppercase text-zinc-500 tracking-widest block mb-2 text-center">Masuk Aman Sebagai Staf Demo</span>
-                      
-                      <div className="grid grid-cols-2 gap-2.5">
-                        {loginPresets.map((preset) => (
-                          <button
-                            key={preset.role}
-                            onClick={() => handlePresetLogin(preset.role)}
-                            disabled={loggingIn}
-                            className={`p-3 rounded-2xl border text-left transition-all active:scale-95 flex items-center gap-2 block ${preset.color}`}
-                          >
-                            <div className="w-8 h-8 rounded-xl bg-zinc-950 flex items-center justify-center font-black text-xs shrink-0 border border-zinc-850">
-                              {preset.initial}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-[10px] font-black text-zinc-250 truncate leading-tight">{preset.name.split(' ')[0]} {preset.name.split(' ')[1] || ''}</p>
-                              <p className="text-[8px] text-zinc-505 font-bold uppercase tracking-wider mt-0.5">{preset.title}</p>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+              {/* Direct Login with Google Container */}
+              <div className="space-y-6 pt-4 text-center">
+                <button 
+                  type="button"
+                  onClick={login}
+                  disabled={loggingIn}
+                  className="w-full flex items-center justify-center gap-3 py-4 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-600 hover:from-violet-500 hover:via-fuchsia-500 hover:to-indigo-500 text-white rounded-2xl font-black text-sm tracking-wide transition-all active:scale-[0.98] group shadow-[0_0_30px_rgba(139,92,246,0.3)]"
+                >
+                  <LogIn className="w-5 h-5 text-white group-hover:translate-x-0.5 transition-transform animate-pulse" />
+                  {loggingIn ? 'MEMVALIDASI...' : 'MASUK DENGAN GOOGLE'}
+                </button>
 
-                  {!hideQuickLogin && (
-                    <div className="flex gap-2 items-center text-zinc-700">
-                      <div className="flex-1 h-px bg-zinc-800" />
-                      <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Atau Autentikasi Mandiri</span>
-                      <div className="flex-1 h-px bg-zinc-800" />
-                    </div>
-                  )}
+                <p className="text-[10px] font-mono text-zinc-500 leading-relaxed">
+                  Gunakan Akun Google Staf resmi Anda untuk masuk ke sistem secara terenkripsi.
+                </p>
 
-                  {/* Standard Sign In triggers */}
-                  <div className="space-y-2">
+                {/* Subtle Backup Demo bypass in case Google login has sandbox popup restrictions */}
+                <div className="border-t border-violet-950/30 pt-4 mt-2 space-y-2">
+                  <span className="text-[8px] font-mono font-bold uppercase text-violet-500/70 tracking-[0.12em] block">
+                    Gunakan Akses Demo Instan:
+                  </span>
+                  <div className="flex flex-wrap gap-1.5 justify-center items-center">
                     <button 
-                      onClick={() => setIsEmailSignIn(true)}
-                      className="w-full flex items-center justify-center gap-3 py-3.5 bg-zinc-950 border border-zinc-805 hover:border-zinc-700 text-zinc-300 rounded-2xl font-bold text-xs hover:bg-zinc-900 transition-all active:scale-95"
+                      type="button" 
+                      onClick={() => handlePresetLogin('admin')} 
+                      className="text-[8px] font-mono font-bold px-3 py-1 rounded-full border border-violet-950/60 hover:border-violet-700 bg-violet-950/10 text-violet-400 hover:bg-violet-900/30 transition-all active:scale-95"
                     >
-                      <Mail className="w-4 h-4 text-zinc-400" />
-                      Gunakan Email & Password
+                      ADMIN PORTAL
                     </button>
-
                     <button 
-                      onClick={login}
-                      disabled={loggingIn}
-                      className="w-full flex items-center justify-center gap-3 py-3.5 bg-zinc-100 hover:bg-white text-zinc-950 rounded-2xl font-black text-xs transition-all active:scale-95 group shadow-lg shadow-black/30"
+                      type="button" 
+                      onClick={() => handlePresetLogin('owner')} 
+                      className="text-[8px] font-mono font-bold px-3 py-1 rounded-full border border-violet-950/60 hover:border-violet-700 bg-violet-950/10 text-violet-400 hover:bg-violet-900/30 transition-all active:scale-95"
                     >
-                      <LogIn className="w-4 h-4 text-zinc-950 group-hover:translate-x-1 transition-transform" />
-                      Masuk dengan Akun Google
+                      OWNER PORTAL
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={() => handlePresetLogin('keuangan')} 
+                      className="text-[8px] font-mono font-bold px-3 py-1 rounded-full border border-violet-950/60 hover:border-violet-700 bg-violet-950/10 text-violet-400 hover:bg-violet-900/30 transition-all active:scale-95"
+                    >
+                      FINANCE PORTAL
                     </button>
                   </div>
                 </div>
-              ) : (
-                <form onSubmit={handleFormSubmit} className="space-y-4 text-left">
-                  {/* EMAIL INPUT WITH ICON */}
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest">Alamat Email</label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-500">
-                        <Mail className="w-4 h-4" />
-                      </div>
-                      <input 
-                        type="email"
-                        required
-                        value={email}
-                        disabled={loggingIn}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="nama@klinik.com"
-                        className="w-full bg-zinc-950/80 border border-zinc-800 rounded-2xl pl-11 pr-5 py-3.5 text-xs text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20"
-                      />
-                    </div>
-                  </div>
+              </div>
 
-                  {/* PASSWORD INPUT WITH ICON */}
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest">Kata Sandi</label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-500">
-                        <Lock className="w-4 h-4" />
-                      </div>
-                      <input 
-                        type="password"
-                        required
-                        value={password}
-                        disabled={loggingIn}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Masukkan sandi..."
-                        className="w-full bg-zinc-950/80 border border-zinc-800 rounded-2xl pl-11 pr-5 py-3.5 text-xs text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20"
-                      />
-                    </div>
-                  </div>
-
-                  <p className="text-[9px] text-zinc-500 leading-relaxed italic block mt-1">
-                    *Tip: Jika email belum pernah didaftarkan ke sistem, akun baru akan secara otomatis dibuat sewaktu Anda menekan tombol Masuk.
-                  </p>
-
-                  <div className="pt-2 flex gap-3">
-                    <button 
-                      type="button"
-                      onClick={() => setIsEmailSignIn(false)}
-                      className="flex-1 py-3.5 bg-zinc-850 hover:bg-zinc-800 text-zinc-400 rounded-2xl text-[10px] font-black uppercase tracking-widest text-center"
-                    >
-                      Batal
-                    </button>
-                    <button 
-                      type="submit"
-                      disabled={loggingIn}
-                      className="flex-1 py-3.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest text-center shadow-lg"
-                    >
-                      {loggingIn ? 'Menilai...' : 'Masuk'}
-                    </button>
-                  </div>
-                </form>
-              )}
-
-              {/* Active Roles bottom tag */}
+              {/* Connected Systems Bottom Badge Panel */}
               {showCredit && (
-                <div className="mt-8 flex justify-center gap-3 border-t border-zinc-800/60 pt-4 text-[8px] font-bold text-zinc-500">
-                  <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block" /> ADMIN</span>
-                  <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-purple-500 inline-block" /> OWNER</span>
-                  <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" /> KEUANGAN</span>
-                  <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-orange-500 inline-block" /> PERAWAT</span>
+                <div className="mt-8 flex justify-center gap-3 border-t border-violet-950/40 pt-4 text-[7px] font-mono font-bold text-zinc-500">
+                  <span className="flex items-center gap-1"><span className="w-1 h-1 rounded-full bg-blue-500 animate-pulse" /> ADMIN</span>
+                  <span className="flex items-center gap-1"><span className="w-1 h-1 rounded-full bg-purple-500 animate-pulse" /> OWNER</span>
+                  <span className="flex items-center gap-1"><span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" /> FINANCE</span>
+                  <span className="flex items-center gap-1"><span className="w-1 h-1 rounded-full bg-orange-500 animate-pulse" /> NURSE</span>
                 </div>
               )}
             </div>

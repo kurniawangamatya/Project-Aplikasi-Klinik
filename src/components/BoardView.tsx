@@ -1647,7 +1647,7 @@ const CardItem: React.FC<CardItemProps> = ({ card, allLists, users, allowedNavs,
             >
               {imgAttachments.map((img, idx) => (
                 <button
-                  key={idx}
+                  key={`display-thumb-${idx}-${img.name}`}
                   onClick={() => setCardActiveImgIdx(idx)}
                   className={cn(
                     "w-12 h-12 rounded-xl overflow-hidden border bg-zinc-900 transition-all shrink-0 relative",
@@ -1762,9 +1762,9 @@ const CardItem: React.FC<CardItemProps> = ({ card, allLists, users, allowedNavs,
         <div className="py-2 flex flex-col gap-2">
           {card.labels && card.labels.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mb-1">
-              {card.labels.map(l => (
+              {card.labels.map((l, lIdx) => (
                 <span 
-                  key={l.id} 
+                  key={`card-label-${l.id || lIdx}-${l.name}`} 
                   className={cn(
                     "px-2.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider text-white shadow-sm flex items-center gap-1 shrink-0", 
                     l.color
@@ -1895,12 +1895,12 @@ const CardItem: React.FC<CardItemProps> = ({ card, allLists, users, allowedNavs,
                               className="absolute top-full left-0 mt-2 w-48 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl z-50 p-3 flex flex-col gap-1"
                             >
                               <div className="text-[9px] font-black uppercase text-zinc-500 tracking-widest mb-2 px-1">Pilih Label</div>
-                              {boardLabels.map(label => {
+                              {boardLabels.map((label, labelIdx) => {
                                 const isSelected = editedLabels.some(l => l.id === label.id);
                                 const isEditing = editingLabelId === label.id;
 
                                 return (
-                                  <div key={label.id} className="flex flex-col gap-1">
+                                  <div key={`board-label-${label.id || labelIdx}-${label.name}`} className="flex flex-col gap-1">
                                     <div className="flex items-center gap-1 group/label">
                                       {isEditing ? (
                                         <div className="flex-1 flex flex-col gap-1 p-2 bg-zinc-800 rounded-lg">
@@ -2048,7 +2048,7 @@ const CardItem: React.FC<CardItemProps> = ({ card, allLists, users, allowedNavs,
                               <div className="space-y-1">
                                 {users.map((u, uIdx) => (
                                   <button
-                                    key={`${u.uid}-${uIdx}`}
+                                    key={`assign-member-${u.uid || uIdx}`}
                                     onClick={() => setEditedAssignedTo(u.uid)}
                                     className={cn(
                                       "flex items-center justify-between w-full px-3 py-2 rounded-lg text-[11px] transition-all",
@@ -2084,7 +2084,7 @@ const CardItem: React.FC<CardItemProps> = ({ card, allLists, users, allowedNavs,
                         <div className="flex flex-wrap gap-2 ml-9">
                           {editedLabels.map((label, lIdx) => (
                             <button
-                              key={`${label.id}-${lIdx}`}
+                              key={`edited-label-${label.id || lIdx}`}
                               onClick={() => setEditedLabels(prev => prev.filter(l => l.id !== label.id))}
                               className={cn(
                                 "flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black text-white hover:opacity-80 transition-opacity",
@@ -2133,7 +2133,7 @@ const CardItem: React.FC<CardItemProps> = ({ card, allLists, users, allowedNavs,
                         {editedAttachments.map((att, idx) => {
                            const isImage = att.url.startsWith('data:image/') || att.url.match(/\.(jpeg|jpg|gif|png|webp)$/i);
                            return (
-                            <div key={idx} className="flex gap-4 group">
+                            <div key={`modal-att-item-${idx}-${att.name}`} className="flex gap-4 group">
                               <div 
                                 className="w-24 h-16 bg-zinc-950 rounded-lg overflow-hidden border border-zinc-800 cursor-pointer"
                                 onClick={() => isImage && setPreviewImage({ url: att.url, name: att.name, idx })}
@@ -2210,7 +2210,7 @@ const CardItem: React.FC<CardItemProps> = ({ card, allLists, users, allowedNavs,
                            </div>
                            <div className="space-y-2">
                              {editedChecklists.map((item, cIdx) => (
-                               <div key={`${item.id}-${cIdx}`} className="flex items-center gap-3 group">
+                               <div key={`modal-chk-item-${item.id || cIdx}`} className="flex items-center gap-3 group">
                                  <button 
                                    onClick={() => toggleChecklistItem(item.id)}
                                    className={cn(
@@ -2287,48 +2287,49 @@ const CardItem: React.FC<CardItemProps> = ({ card, allLists, users, allowedNavs,
 
                         {/* Activity List */}
                         <div className="space-y-6">
-                          {combinedActivity.map((item: any) => {
-                            const itemKey = `${item.type}-${item.id}`;
-                            if (item.type === 'comment') {
-                               return (
-                                <div key={itemKey} className="flex gap-3">
-                                  <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center font-black text-zinc-500 text-[10px]">
-                                    {item.userName?.charAt(0).toUpperCase()}
+                          {combinedActivity
+                            .filter((item: any) => item.type === 'comment' || showActivityDetails)
+                            .map((item: any, actIdx: number) => {
+                              const itemKey = `${item.type}-${item.id || actIdx}`;
+                              if (item.type === 'comment') {
+                                 return (
+                                  <div key={itemKey} className="flex gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center font-black text-zinc-500 text-[10px]">
+                                      {item.userName?.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div className="flex-1 space-y-1">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-[11px] font-black text-zinc-200">{item.userName}</span>
+                                        <span className="text-[9px] text-zinc-600 font-mono">
+                                          {item.createdAt?.toDate ? item.createdAt.toDate().toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
+                                        </span>
+                                      </div>
+                                      <div className="bg-zinc-950 border border-zinc-800 px-4 py-2 rounded-xl">
+                                        <p className="text-[13px] text-zinc-300 leading-relaxed">{item.text}</p>
+                                      </div>
+                                    </div>
                                   </div>
-                                  <div className="flex-1 space-y-1">
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-[11px] font-black text-zinc-200">{item.userName}</span>
+                                 );
+                              } else {
+                                 return (
+                                  <div key={itemKey} className="flex gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center font-black text-zinc-700 text-[10px]">
+                                      {item.userName?.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div className="flex-1">
+                                      <p className="text-[11px] text-zinc-500 leading-relaxed">
+                                        <span className="font-bold text-zinc-300">{item.userName}</span> 
+                                        {' '}{item.changeType} 
+                                        {item.previousValue ? ` from ${item.previousValue} to ${item.newValue}` : ` this card`}
+                                      </p>
                                       <span className="text-[9px] text-zinc-600 font-mono">
-                                        {item.createdAt?.toDate().toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                        {item.createdAt?.toDate ? item.createdAt.toDate().toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
                                       </span>
                                     </div>
-                                    <div className="bg-zinc-950 border border-zinc-800 px-4 py-2 rounded-xl">
-                                      <p className="text-[13px] text-zinc-300 leading-relaxed">{item.text}</p>
-                                    </div>
                                   </div>
-                                </div>
-                               );
-                            } else if (showActivityDetails) {
-                               return (
-                                <div key={itemKey} className="flex gap-3">
-                                  <div className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center font-black text-zinc-700 text-[10px]">
-                                    {item.userName?.charAt(0).toUpperCase()}
-                                  </div>
-                                  <div className="flex-1">
-                                    <p className="text-[11px] text-zinc-500 leading-relaxed">
-                                      <span className="font-bold text-zinc-300">{item.userName}</span> 
-                                      {' '}{item.changeType} 
-                                      {item.previousValue ? ` from ${item.previousValue} to ${item.newValue}` : ` this card`}
-                                    </p>
-                                    <span className="text-[9px] text-zinc-600 font-mono">
-                                      {item.createdAt?.toDate().toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                    </span>
-                                  </div>
-                                </div>
-                               );
-                            }
-                            return null;
-                          })}
+                                 );
+                              }
+                            })}
                         </div>
                       </div>
                     </div>
@@ -2610,7 +2611,7 @@ const CardItem: React.FC<CardItemProps> = ({ card, allLists, users, allowedNavs,
                     <div className="grid grid-cols-4 gap-2 max-h-40 overflow-y-auto no-scrollbar p-0.5">
                       {imgAttachments.map((img, idx) => (
                         <button
-                          key={idx}
+                          key={`img-actions-thumb-${idx}-${img.name}`}
                           onClick={() => setCardActiveImgIdx(idx)}
                           className={cn(
                             "aspect-square rounded-xl overflow-hidden border bg-zinc-950 transition-all shrink-0 relative",

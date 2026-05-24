@@ -8,10 +8,10 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
 } from 'recharts';
 import { 
+  db, auth, handleFirestoreError, OperationType,
   collection, query, where, orderBy, onSnapshot, 
   addDoc, updateDoc, getDoc, doc, serverTimestamp, getDocs, limit 
-} from 'firebase/firestore';
-import { db, auth, handleFirestoreError, OperationType } from '../lib/firebase';
+} from '../lib/firebase';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../hooks/useAuth';
 import { motion, AnimatePresence } from 'motion/react';
@@ -134,7 +134,7 @@ export default function Attendance() {
         // Fallback lazy fetch
         const uDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
         if (uDoc.exists()) {
-          displayName = uDoc.data().displayName;
+          displayName = (uDoc.data() as any)?.displayName;
         }
       }
       if (!displayName) {

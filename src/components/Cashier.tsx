@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { collection, query, onSnapshot, addDoc, serverTimestamp, updateDoc, doc, getDocs, deleteDoc, orderBy, where, limit } from 'firebase/firestore';
-import { db, auth, handleFirestoreError, OperationType } from '../lib/firebase';
+import { db, auth, handleFirestoreError, OperationType, collection, query, onSnapshot, addDoc, serverTimestamp, updateDoc, doc, getDocs, deleteDoc, orderBy, where, limit } from '../lib/firebase';
 import { Product, CartItem, SaleTransaction, UserProfile } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import { useData } from '../contexts/DataContext';
