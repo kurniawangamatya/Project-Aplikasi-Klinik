@@ -1,0 +1,6 @@
+{
+  "name": "Gimu Andalan",
+  "description": "A real-time collaboration tool for Clinic with role-based access for Admin, Finance, Owner, Dokter, Perawat, Apoteker, Media, and PIC.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

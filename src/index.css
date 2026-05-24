@@ -1,0 +1,114 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+@import "react-quill-new/dist/quill.snow.css";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f4f4f5;
+  --bg-tertiary: #e4e4e7;
+  --text-primary: #09090b;
+  --text-secondary: #52525b;
+  --border-primary: #e4e4e7;
+}
+
+.dark {
+  --bg-primary: #09090b;
+  --bg-secondary: #18181b;
+  --bg-tertiary: #27272a;
+  --text-primary: #f4f4f5;
+  --text-secondary: #a1a1aa;
+  --border-primary: #27272a;
+}
+
+@layer utilities {
+  @media print {
+    .print\:hidden {
+      display: none !important;
+    }
+    body * {
+      visibility: hidden;
+    }
+    #printable-receipt, #printable-receipt * {
+      visibility: visible;
+    }
+    #printable-receipt {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+    }
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-[var(--bg-primary)] text-[var(--text-primary)] antialiased;
+  }
+
+  /* Custom Quill styles to match theme */
+  .ql-container.ql-snow {
+    @apply border-[var(--border-primary)] bg-[var(--bg-primary)] rounded-b-xl text-[var(--text-primary)] font-sans;
+    border-top: none !important;
+  }
+  .ql-toolbar.ql-snow {
+    @apply border-[var(--border-primary)] bg-[var(--bg-secondary)] rounded-t-xl;
+    border-bottom: 1px solid var(--border-primary) !important;
+  }
+  .ql-snow .ql-stroke {
+    @apply stroke-zinc-500;
+  }
+  .ql-snow .ql-fill {
+    @apply fill-zinc-500;
+  }
+  .ql-snow .ql-picker {
+    @apply text-zinc-500;
+  }
+  .ql-snow .ql-picker-options {
+    @apply bg-[var(--bg-secondary)] border-[var(--border-primary)];
+  }
+  .ql-editor.ql-blank::before {
+    @apply text-zinc-400 dark:text-zinc-600 italic font-normal;
+  }
+  .ql-editor {
+    @apply min-h-[150px];
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-zinc-300 dark:bg-zinc-800 rounded-full;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-zinc-400 dark:bg-zinc-700;
+  }
+
+  .bento-card {
+    @apply bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-[2.5rem] shadow-xl transition-all duration-300;
+  }
+  
+  .glass-header {
+    @apply bg-[var(--bg-primary)]/50 backdrop-blur-md border-b border-[var(--border-primary)];
+  }
+}

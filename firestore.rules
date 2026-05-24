@@ -1,0 +1,268 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // --- Global Safety Net (Pillar 0) ---
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Global Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'kurniawangamatya37@gmail.com' ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserData().role == 'admin')
+      );
+    }
+
+    function isOwner() {
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserData().role == 'owner';
+    }
+
+    function isKeuangan() {
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserData().role == 'keuangan';
+    }
+
+    function isDokter() {
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserData().role == 'dokter';
+    }
+
+    function isPerawat() {
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserData().role == 'perawat';
+    }
+
+    function isApoteker() {
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserData().role == 'apoteker';
+    }
+
+    function isMedia() {
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserData().role == 'media';
+    }
+
+    function isPIC() {
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserData().role == 'PIC';
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Entity Specific Validations ---
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'role', 'displayName']) &&
+             data.uid is string &&
+             data.email is string &&
+             data.role in ['admin', 'keuangan', 'owner', 'dokter', 'perawat', 'apoteker', 'media', 'PIC'] &&
+             data.displayName is string;
+    }
+
+    function isValidBoard(data) {
+      return data.keys().hasAll(['name', 'ownerId', 'createdAt']) &&
+             data.name is string && data.name.size() <= 100 &&
+             data.ownerId is string &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidList(data) {
+      return data.keys().hasAll(['name', 'boardId', 'order', 'createdAt']) &&
+             data.name is string && data.name.size() <= 100 &&
+             data.boardId is string &&
+             data.order is number &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidCard(data) {
+      return data.keys().hasAll(['title', 'boardId', 'order', 'createdAt']) &&
+             data.title is string && data.title.size() <= 200 &&
+             data.boardId is string &&
+             data.order is number &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidProduct(data) {
+      return data.keys().hasAll(['name', 'shortName', 'price', 'category']) &&
+             data.name is string &&
+             data.shortName is string &&
+             data.price is number &&
+             data.category is string;
+    }
+
+    function isValidSale(data) {
+      return data.keys().hasAll(['total', 'items', 'customerName', 'createdAt', 'createdBy']) &&
+             data.total is number &&
+             data.items is list &&
+             data.customerName is string &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidAppointment(data) {
+      return data.keys().hasAll(['patientName', 'patientPhone', 'doctorId', 'date', 'startTime', 'endTime', 'status']) &&
+             data.patientName is string &&
+             data.patientPhone is string &&
+             data.doctorId is string &&
+             data.startTime is string &&
+             data.endTime is string &&
+             data.status in ['scheduled', 'completed', 'cancelled'];
+    }
+
+    // --- Collection Groups (Critical for Search) ---
+    match /{path=**}/cards/{cardId} {
+      allow read: if isSignedIn();
+    }
+
+    // --- Collections ---
+
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() || (isSignedIn() && userId == request.auth.uid);
+    }
+
+    match /attendance/{attendanceId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin() || isKeuangan() || isOwner());
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update: if isAdmin() || isOwner() || isKeuangan() || (isSignedIn() && existing().userId == request.auth.uid);
+      allow delete: if isAdmin() || isOwner() || isKeuangan();
+    }
+
+    match /employees/{employeeId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() || isOwner() || isKeuangan();
+    }
+
+    match /categories/{categoryId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() || isOwner() || isKeuangan();
+    }
+
+    match /products/{productId} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin() || isOwner();
+      allow update: if isAdmin() || isOwner();
+      allow delete: if isAdmin() || isOwner();
+    }
+
+    match /boards/{boardId} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin() || isOwner();
+      allow update: if isAdmin() || isOwner();
+      allow delete: if isAdmin() || isOwner();
+
+      match /lists/{listId} {
+        allow read: if isSignedIn();
+        allow write: if isAdmin() || isOwner();
+      }
+
+      match /cards/{cardId} {
+        allow read: if isSignedIn();
+        allow write: if isSignedIn(); // Cards can be created/moved by anyone signed in typically in a collab tool
+        
+        match /history/{historyId} {
+          allow read: if isSignedIn();
+          allow create: if isSignedIn();
+        }
+        
+        match /comments/{commentId} {
+          allow read: if isSignedIn();
+          allow create: if isSignedIn();
+          allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+        }
+      }
+
+      match /templates/{templateId} {
+        allow read: if isSignedIn();
+        allow write: if isAdmin() || isOwner();
+      }
+    }
+
+    match /sales/{saleId} {
+      allow read: if isSignedIn() && (
+        isAdmin() || isOwner() || isKeuangan() || isApoteker() || 
+        resource.data.doctorId == request.auth.uid || 
+        resource.data.nurseId == request.auth.uid ||
+        resource.data.createdBy == request.auth.uid
+      );
+      allow create: if isSignedIn();
+      allow update: if isAdmin() || isOwner() || isKeuangan();
+      allow delete: if isAdmin() || isOwner();
+    }
+
+    match /pending_orders/{orderId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow write: if isSignedIn();
+    }
+
+    match /audit_logs/{logId} {
+      allow read: if isAdmin() || isOwner();
+      allow create: if isSignedIn();
+    }
+
+    match /payroll/{payrollId} {
+      allow read: if isAdmin() || isOwner() || isKeuangan();
+      allow write: if isAdmin() || isOwner() || isKeuangan();
+    }
+
+    match /appointments/{appointmentId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidAppointment(incoming());
+      allow update: if isSignedIn() && (
+        isAdmin() || isOwner() || isKeuangan() || isDokter()
+      );
+      allow delete: if isAdmin() || isOwner();
+    }
+
+    match /settings/{settingId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() || isOwner();
+    }
+
+    match /role_permissions/{roleId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() || isOwner();
+    }
+
+    match /kpi_entries/{entryId} {
+      allow list: if isSignedIn() && (
+        request.auth.token.email == 'kurniawangamatya37@gmail.com' ||
+        isAdmin() || isOwner() || isPIC() || 
+        resource.data.userId == request.auth.uid
+      );
+      allow get: if isSignedIn() && (
+        request.auth.token.email == 'kurniawangamatya37@gmail.com' ||
+        isAdmin() || isOwner() || isPIC() || 
+        resource.data.userId == request.auth.uid
+      );
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update: if isSignedIn() && (
+        isAdmin() || isOwner() || isPIC() || 
+        (existing().userId == request.auth.uid && existing().status == 'pending')
+      );
+      allow delete: if isAdmin() || isOwner();
+    }
+
+    match /kpi_templates/{templateId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() || isOwner();
+    }
+  }
+}

@@ -1,0 +1,407 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and role information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "keuangan", "owner", "dokter"] },
+        "photoURL": { "type": "string" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Board": {
+      "title": "Board",
+      "description": "Trello board",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "ownerId"]
+    },
+    "List": {
+      "title": "List",
+      "description": "Column in a board",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "boardId": { "type": "string" },
+        "name": { "type": "string" },
+        "order": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["boardId", "name", "order"]
+    },
+    "Card": {
+      "title": "Card",
+      "description": "Task item in a list",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "listId": { "type": "string" },
+        "boardId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "status": { "type": "string" },
+        "priority": { "type": "string", "enum": ["low", "medium", "high"] },
+        "assignedTo": { "type": "string" },
+        "amount": { "type": "number" },
+        "order": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "lastModifiedBy": { "type": "string" },
+        "dueDate": { "type": "string", "format": "date" },
+        "archived": { "type": "boolean" },
+        "isTemplate": { "type": "boolean" },
+        "attachments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "url": { "type": "string" }
+            }
+          }
+        }
+      },
+      "required": ["listId", "boardId", "title", "order"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "Real-time notification for status changes",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "message": { "type": "string" },
+        "cardId": { "type": "string" },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "message", "read", "createdAt"]
+    },
+    "CardHistory": {
+      "title": "Card History",
+      "description": "Log of changes made to a card",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "changeType": { "type": "string" },
+        "previousValue": { "type": "string" },
+        "newValue": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "userName", "changeType", "createdAt"]
+    },
+    "CardComment": {
+      "title": "Card Comment",
+      "description": "User comment on a card",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "text": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "userName", "text", "createdAt"]
+    },
+    "AuditLog": {
+      "title": "Audit Log",
+      "description": "System-wide administrative actions log",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "adminId": { "type": "string" },
+        "adminName": { "type": "string" },
+        "action": { "type": "string" },
+        "targetUserId": { "type": "string" },
+        "targetUserName": { "type": "string" },
+        "details": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["adminId", "adminName", "action", "targetUserId", "createdAt"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Clinical product for sale",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "shortName": { "type": "string" },
+        "price": { "type": "number" },
+        "stock": { "type": "number" },
+        "category": { "type": "string" },
+        "color": { "type": "string" },
+        "type": { "type": "string", "enum": ["product", "service"] },
+        "sharingType": { "type": "string", "enum": ["percentage", "fixed"] },
+        "nurseCommission": { "type": "number", "description": "Commission for nurse" },
+        "adminCommission": { "type": "number", "description": "Commission for admin" },
+        "financeCommission": { "type": "number", "description": "Commission for finance" },
+        "ownerCommission": { "type": "number", "description": "Commission for owner" }
+      },
+      "required": ["name", "shortName", "price", "stock", "category"]
+    },
+    "Sale": {
+      "title": "Sale Transaction",
+      "description": "Clinical sale transaction record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "items": { "type": "array" },
+        "subtotal": { "type": "number" },
+        "discount": { "type": "number" },
+        "total": { "type": "number" },
+        "customerName": { "type": "string" },
+        "customerPhone": { "type": "string" },
+        "tableNumber": { "type": "string" },
+        "notes": { "type": "string" },
+        "isDelivery": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["items", "subtotal", "total", "createdAt", "createdBy"]
+    },
+    "PendingOrder": {
+      "title": "Pending Order",
+      "description": "Draft or unpaid order",
+      "type": "object",
+      "properties": {
+        "cart": { "type": "array" },
+        "customerName": { "type": "string" },
+        "customerPhone": { "type": "string" },
+        "tableNumber": { "type": "string" },
+        "notes": { "type": "string" },
+        "isDelivery": { "type": "boolean" },
+        "subtotal": { "type": "number" },
+        "discount": { "type": "number" },
+        "discountType": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["cart", "subtotal", "createdAt", "createdBy"]
+    },
+    "Employee": {
+      "title": "Employee",
+      "description": "Staff member information",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "role": { "type": "string" },
+        "salary": { "type": "number" },
+        "hourlyRate": { "type": "number" },
+        "status": { "type": "string", "enum": ["active", "inactive"] },
+        "joinedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "role", "salary", "status"]
+    },
+    "Payroll": {
+      "title": "Payroll Record",
+      "description": "Salary payment record",
+      "type": "object",
+      "properties": {
+        "employeeId": { "type": "string" },
+        "employeeName": { "type": "string" },
+        "amount": { "type": "number" },
+        "baseSalary": { "type": "number" },
+        "attendanceBonus": { "type": "number" },
+        "month": { "type": "string" },
+        "year": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "paid"] },
+        "paidAt": { "type": "string", "format": "date-time" },
+        "notes": { "type": "string" }
+      },
+      "required": ["employeeName", "amount", "month", "year", "status"]
+    },
+    "Category": {
+      "title": "Product Category",
+      "description": "Customizable categories for products",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name"]
+    },
+    "Attendance": {
+      "title": "Attendance",
+      "description": "Daily attendance record for staff",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "date": { "type": "string" },
+        "clockIn": { "type": "string", "format": "date-time" },
+        "clockOut": { "type": "string", "format": "date-time" },
+        "hoursWorked": { "type": "number" },
+        "calculatedWage": { "type": "number" },
+        "status": { "type": "string", "enum": ["present", "late", "absent"] }
+      },
+      "required": ["userId", "userName", "date", "clockIn"]
+    },
+    "Appointment": {
+      "title": "Appointment",
+      "description": "Scheduled clinic appointments",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "patientName": { "type": "string" },
+        "patientPhone": { "type": "string" },
+        "doctorId": { "type": "string" },
+        "doctorName": { "type": "string" },
+        "nurseId": { "type": "string" },
+        "nurseName": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "startTime": { "type": "string" },
+        "endTime": { "type": "string" },
+        "notes": { "type": "string" },
+        "status": { "type": "string", "enum": ["scheduled", "cancelled", "completed"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["patientName", "patientPhone", "doctorId", "date", "startTime", "endTime"]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "List of admin UIDs",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "assignedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid"]
+    },
+    "RolePermissions": {
+      "title": "Role Permissions",
+      "description": "Configurable permissions for user roles",
+      "type": "object",
+      "properties": {
+        "navigation": { "type": "array", "items": { "type": "string" } },
+        "features": { "type": "array", "items": { "type": "string" } },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["navigation"]
+    },
+    "KPITemplate": {
+      "title": "KPI Template",
+      "description": "Template for KPI tasks with associated pricing per role",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "role": { "type": "string" },
+        "taskName": { "type": "string" },
+        "price": { "type": "number" },
+        "unit": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["role", "taskName", "price"]
+    },
+    "Setting": {
+      "title": "Setting",
+      "description": "General system settings",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "address": { "type": "string" },
+        "phone": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "categories/{categoryId}": {
+      "schema": "Category",
+      "description": "Product categories records"
+    },
+    "attendance/{attendanceId}": {
+      "schema": "Attendance",
+      "description": "Daily attendance logs"
+    },
+    "employees/{employeeId}": {
+      "schema": "Employee",
+      "description": "Clinical staff records"
+    },
+    "payroll/{payrollId}": {
+      "schema": "Payroll",
+      "description": "Salary payments records"
+    },
+    "users/{userId}": {
+      "schema": "User",
+      "description": "Static user profile data"
+    },
+    "audit_logs/{logId}": {
+      "schema": "AuditLog",
+      "description": "Administrative actions audit trail"
+    },
+    "products/{productId}": {
+      "schema": "Product",
+      "description": "Clinical products catalog"
+    },
+    "sales/{saleId}": {
+      "schema": "Sale",
+      "description": "Sales transactions records"
+    },
+    "pending_orders/{orderId}": {
+      "schema": "PendingOrder",
+      "description": "Temporary storage for open orders"
+    },
+    "boards/{boardId}": {
+      "schema": "Board",
+      "description": "Collection of boards"
+    },
+    "boards/{boardId}/lists/{listId}": {
+      "schema": "List",
+      "description": "Lists within a board"
+    },
+    "boards/{boardId}/cards/{cardId}": {
+      "schema": "Card",
+      "description": "Cards within a board (flat structure for easier queries)"
+    },
+    "boards/{boardId}/cards/{cardId}/history/{historyId}": {
+      "schema": "CardHistory",
+      "description": "History of changes for a specific card"
+    },
+    "boards/{boardId}/cards/{cardId}/comments/{commentId}": {
+      "schema": "CardComment",
+      "description": "User comments on a specific card"
+    },
+    "boards/{boardId}/templates/{templateId}": {
+      "schema": "Card",
+      "description": "Reusable card templates"
+    },
+    "notifications/{notificationId}": {
+      "schema": "Notification",
+      "description": "User notifications"
+    },
+    "appointments/{appointmentId}": {
+      "schema": "Appointment",
+      "description": "Scheduled appointments for patients"
+    },
+    "admins/{adminId}": {
+      "schema": "Admin",
+      "description": "Administrative users access list"
+    },
+    "role_permissions/{roleId}": {
+      "schema": "RolePermissions",
+      "description": "Navigation and feature accessibility per user role"
+    },
+    "settings/{settingId}": {
+      "schema": "Setting",
+      "description": "General system settings"
+    },
+    "kpi_templates/{templateId}": {
+      "schema": "KPITemplate",
+      "description": "KPI task templates and pricing"
+    }
+  }
+}
