@@ -120,7 +120,7 @@ function MemberCard({ member, role, allSales, employees, onViewMore }: MemberCar
           <div className="flex items-center justify-between p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
             <div>
               <p className="text-[8px] font-black uppercase text-slate-400 tracking-widest mb-1">Pendapatan (Omset)</p>
-              <p className="text-sm font-black text-slate-900 font-mono">Rp {stats.omsetKotor.toLocaleString()}</p>
+              <p className="text-sm font-black text-slate-900 font-mono">Rp {(stats.omsetKotor || 0).toLocaleString()}</p>
             </div>
             <TrendingUp className="w-4 h-4 text-emerald-500" />
           </div>
@@ -128,7 +128,7 @@ function MemberCard({ member, role, allSales, employees, onViewMore }: MemberCar
           <div className="flex items-center justify-between p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
             <div>
               <p className="text-[8px] font-black uppercase text-slate-400 tracking-widest mb-1">Pengeluaran (Upah)</p>
-              <p className="text-sm font-black text-slate-900 font-mono">Rp {stats.totalWage.toLocaleString()}</p>
+              <p className="text-sm font-black text-slate-900 font-mono">Rp {(stats.totalWage || 0).toLocaleString()}</p>
             </div>
             <ArrowDownRight className="w-4 h-4 text-orange-500" />
           </div>
@@ -136,7 +136,7 @@ function MemberCard({ member, role, allSales, employees, onViewMore }: MemberCar
           <div className="flex items-center justify-between p-4 bg-blue-50/30 rounded-2xl border border-blue-100">
             <div>
               <p className="text-[8px] font-black uppercase text-blue-600 tracking-widest mb-1">Margin Klinik</p>
-              <p className="text-sm font-black text-blue-700 font-mono">Rp {stats.labaKlinik.toLocaleString()}</p>
+              <p className="text-sm font-black text-blue-700 font-mono">Rp {(stats.labaKlinik || 0).toLocaleString()}</p>
             </div>
             <Activity className="w-4 h-4 text-blue-600" />
           </div>
@@ -673,7 +673,7 @@ export default function MemberReport({ role, title }: MemberReportProps) {
                       <div key={idx} className="space-y-1.5">
                         <div className="flex justify-between items-center text-[9px] font-black uppercase">
                           <span className="text-slate-700 truncate max-w-[150px]">{t.name}</span>
-                          <span className="text-blue-600">Rp {t.totalComm.toLocaleString()}</span>
+                          <span className="text-blue-600">Rp {(t.totalComm || 0).toLocaleString()}</span>
                         </div>
                         <div className="h-1 w-full bg-slate-50 rounded-full overflow-hidden">
                           <motion.div 
@@ -729,7 +729,7 @@ export default function MemberReport({ role, title }: MemberReportProps) {
                             )}
                           </td>
                           <td className="px-6 py-4 text-xs font-black text-slate-900 font-mono text-right whitespace-nowrap">
-                            Rp {sale.total.toLocaleString()}
+                            Rp {(sale.total || 0).toLocaleString()}
                           </td>
                           <td className="px-6 py-4 text-right">
                             <div className="flex items-center justify-end gap-1.5">
@@ -783,9 +783,9 @@ export default function MemberReport({ role, title }: MemberReportProps) {
                     {stats.categories.map((c, idx) => (
                       <tr key={idx} className="hover:bg-slate-50/50 transition-colors group/row">
                         <td className="px-6 py-4 text-xs font-bold text-slate-700">{c.name}</td>
-                        <td className="px-6 py-4 text-xs font-mono text-slate-600 text-right">Rp {c.totalComm.toLocaleString()}</td>
+                        <td className="px-6 py-4 text-xs font-mono text-slate-600 text-right">Rp {(c.totalComm || 0).toLocaleString()}</td>
                         <td className="px-6 py-4 text-xs font-black text-slate-400 text-right font-mono">
-                          {stats.jasa > 0 ? ((c.totalComm / stats.jasa) * 100).toFixed(1) : '0'}%
+                          {stats.jasa > 0 ? (((c.totalComm || 0) / stats.jasa) * 100).toFixed(1) : '0'}%
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center justify-center gap-1.5">
@@ -1027,7 +1027,7 @@ function StatCard({ title, value, icon, color, textColor = "text-white" }: { tit
         <div>
           <h4 className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] mb-1">{title}</h4>
           <div className={cn("text-xl font-black font-mono tracking-tighter", textColor === 'text-white' ? 'text-slate-900' : textColor)}>
-            Rp {Math.round(value).toLocaleString()}
+            Rp {Math.round(value || 0).toLocaleString()}
           </div>
         </div>
       </div>

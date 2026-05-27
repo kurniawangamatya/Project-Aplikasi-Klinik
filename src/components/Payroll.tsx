@@ -206,14 +206,14 @@ export default function Payroll({ setTab }: PayrollProps) {
       const attendanceBonus = Math.round(totalHours * (employee.hourlyRate || 0));
       const overtimeBonus = Math.round(totalOvertimeHours * ((employee.hourlyRate || 20000) * 1.5));
       setPayrollPreview({
-        baseSalary: employee.salary,
+        baseSalary: employee.salary || 0,
         attendanceBonus,
         kpiBonus,
         commissionBonus,
         overtimeBonus,
         overtimeHours: totalOvertimeHours,
         totalHours,
-        total: employee.salary + attendanceBonus + kpiBonus + commissionBonus + overtimeBonus
+        total: (employee.salary || 0) + attendanceBonus + kpiBonus + commissionBonus + overtimeBonus
       });
     };
 
@@ -657,7 +657,7 @@ export default function Payroll({ setTab }: PayrollProps) {
                           </td>
                           <td className="px-8 py-5">
                             <div className="text-xs font-black text-white font-mono">
-                              Rp {record.amount.toLocaleString()}
+                              Rp {(record.amount || 0).toLocaleString()}
                         </div>
                         <div className="flex flex-wrap gap-1 mt-1">
                           {record.attendanceBonus > 0 && (
@@ -787,7 +787,7 @@ export default function Payroll({ setTab }: PayrollProps) {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <span className="text-[9px] font-black uppercase text-zinc-600 tracking-widest block mb-1">Gaji Pokok</span>
-                      <span className="text-xs font-black text-zinc-200 font-mono">Rp {employee.salary.toLocaleString()}</span>
+                      <span className="text-xs font-black text-zinc-200 font-mono">Rp {(employee.salary || 0).toLocaleString()}</span>
                     </div>
                     <div>
                       <span className="text-[9px] font-black uppercase text-zinc-600 tracking-widest block mb-1">Uang Duduk/Jam</span>
@@ -871,15 +871,15 @@ export default function Payroll({ setTab }: PayrollProps) {
                       <td className="px-8 py-5 text-xs font-bold text-zinc-200">{record.employeeName}</td>
                       <td className="px-8 py-5 text-xs text-zinc-500">{record.month} {record.year}</td>
                       <td className="px-8 py-5">
-                        <div className="text-xs font-black text-white font-mono">Rp {record.amount.toLocaleString()}</div>
+                        <div className="text-xs font-black text-white font-mono">Rp {(record.amount || 0).toLocaleString()}</div>
                         {record.attendanceBonus > 0 && (
                           <div className="text-[8px] text-zinc-400 font-bold uppercase tracking-widest mt-1">
-                            + Uang Duduk: Rp {record.attendanceBonus.toLocaleString()}
+                            + Uang Duduk: Rp {(record.attendanceBonus || 0).toLocaleString()}
                           </div>
                         )}
                         {(record as any).overtimeBonus > 0 && (
                           <div className="text-[8px] text-blue-500 font-bold uppercase tracking-widest mt-0.5">
-                            + Uang Lembur: Rp {(record as any).overtimeBonus.toLocaleString()}
+                            + Uang Lembur: Rp {((record as any).overtimeBonus || 0).toLocaleString()}
                           </div>
                         )}
                       </td>
@@ -1047,41 +1047,41 @@ export default function Payroll({ setTab }: PayrollProps) {
                     <div className="bg-zinc-950 p-6 rounded-3xl border border-zinc-800 space-y-3">
                       <div className="flex justify-between items-center">
                         <span className="text-[10px] font-black uppercase text-zinc-600 tracking-widest">Gaji Pokok</span>
-                        <span className="text-xs font-black text-zinc-300 font-mono">Rp {payrollPreview.baseSalary.toLocaleString()}</span>
+                        <span className="text-xs font-black text-zinc-300 font-mono">Rp {(payrollPreview.baseSalary || 0).toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <div className="space-y-0.5">
                           <span className="text-[10px] font-black uppercase text-zinc-600 tracking-widest block">Uang Duduk (Kehadiran)</span>
                           <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-tighter">
-                            {payrollPreview.totalHours.toFixed(1)} Jam x Rp {employees.find(e => e.id === payrollForm.employeeId)?.hourlyRate?.toLocaleString()}
+                            {(payrollPreview.totalHours || 0).toFixed(1)} Jam x Rp {(employees.find(e => e.id === payrollForm.employeeId)?.hourlyRate || 0).toLocaleString()}
                           </span>
                         </div>
-                        <span className="text-xs font-black text-emerald-500 font-mono">Rp {payrollPreview.attendanceBonus.toLocaleString()}</span>
+                        <span className="text-xs font-black text-emerald-500 font-mono">Rp {(payrollPreview.attendanceBonus || 0).toLocaleString()}</span>
                       </div>
-                      {payrollPreview.overtimeBonus > 0 && (
+                      {(payrollPreview.overtimeBonus || 0) > 0 && (
                         <div className="flex justify-between items-center">
                           <div className="space-y-0.5">
                             <span className="text-[10px] font-black uppercase text-zinc-600 tracking-widest block">Uang Lembur (Jam Kerja Lebih)</span>
                             <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-tighter col-span-2">
-                              {payrollPreview.overtimeHours.toFixed(1)} Jam x Rp {(Math.round((employees.find(e => e.id === payrollForm.employeeId)?.hourlyRate || 20000) * 1.5)).toLocaleString()}
+                              {(payrollPreview.overtimeHours || 0).toFixed(1)} Jam x Rp {(Math.round((employees.find(e => e.id === payrollForm.employeeId)?.hourlyRate || 20000) * 1.5)).toLocaleString()}
                             </span>
                           </div>
-                          <span className="text-xs font-black text-blue-500 font-mono">Rp {payrollPreview.overtimeBonus.toLocaleString()}</span>
+                          <span className="text-xs font-black text-blue-500 font-mono">Rp {(payrollPreview.overtimeBonus || 0).toLocaleString()}</span>
                         </div>
                       )}
-                      {payrollPreview.commissionBonus > 0 && (
+                      {(payrollPreview.commissionBonus || 0) > 0 && (
                         <div className="flex justify-between items-center text-xs">
                           <span className="text-[10px] font-black uppercase text-zinc-500 tracking-widest">Jasa Medis / Pelayanan</span>
-                          <span className="text-xs font-black text-rose-500 font-mono">Rp {payrollPreview.commissionBonus.toLocaleString()}</span>
+                          <span className="text-xs font-black text-rose-500 font-mono">Rp {(payrollPreview.commissionBonus || 0).toLocaleString()}</span>
                         </div>
                       )}
                       <div className="flex justify-between items-center text-xs">
                          <span className="text-[10px] font-black uppercase text-zinc-600 tracking-widest">Komisi Jasa (KPI)</span>
-                         <span className="text-xs font-black text-emerald-500 font-mono">Rp {payrollPreview.kpiBonus.toLocaleString()}</span>
+                         <span className="text-xs font-black text-emerald-500 font-mono">Rp {(payrollPreview.kpiBonus || 0).toLocaleString()}</span>
                       </div>
                       <div className="pt-3 border-t border-zinc-900 flex justify-between items-center">
                         <span className="text-[10px] font-black uppercase text-zinc-400 tracking-widest">Total Gaji</span>
-                        <span className="text-sm font-black text-blue-500 font-mono">Rp {payrollPreview.total.toLocaleString()}</span>
+                        <span className="text-sm font-black text-blue-500 font-mono">Rp {(payrollPreview.total || 0).toLocaleString()}</span>
                       </div>
                     </div>
                   )}

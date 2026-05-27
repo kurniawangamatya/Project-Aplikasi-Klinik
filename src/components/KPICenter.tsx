@@ -553,7 +553,7 @@ function KPIEntryCard({ entry, canValidate, canEdit, canDelete, onValidate, onEd
                 <span className="w-1 h-1 rounded-full bg-zinc-800" />
                 <span className="text-[9px] font-bold text-zinc-600 flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
-                  {entry.date?.toDate()?.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                  {entry.date ? (entry.date.toDate ? entry.date.toDate().toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : new Date(entry.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })) : ''}
                 </span>
               </div>
             </div>
@@ -707,7 +707,7 @@ function KPIEntryCard({ entry, canValidate, canEdit, canDelete, onValidate, onEd
                    )}
                    <span className="w-1 h-1 rounded-full bg-zinc-700" />
                    <span className="text-[8px] font-mono text-zinc-500 font-normal">
-                     {entry.validatedAt?.toDate()?.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: '2-digit' }) || '--/--/--'}
+                     {entry.validatedAt ? (entry.validatedAt.toDate ? entry.validatedAt.toDate().toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: '2-digit' }) : new Date(entry.validatedAt).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: '2-digit' })) : '--/--/--'}
                    </span>
                  </div>
                </div>
@@ -724,7 +724,7 @@ function KPIEntryCard({ entry, canValidate, canEdit, canDelete, onValidate, onEd
 
             {entry.validatedAt && (
               <span className="text-[8px] font-mono text-zinc-700">
-                {entry.validatedAt?.toDate()?.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                {entry.validatedAt ? (entry.validatedAt.toDate ? entry.validatedAt.toDate().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : new Date(entry.validatedAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })) : ''}
               </span>
             )}
           </div>

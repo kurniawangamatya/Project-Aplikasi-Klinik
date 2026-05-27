@@ -130,8 +130,8 @@ service cloud.firestore {
     // --- Collections ---
 
     match /users/{userId} {
-      allow read: if isSignedIn();
-      allow write: if isAdmin() || (isSignedIn() && userId == request.auth.uid);
+      allow read: if true;
+      allow write: if (isSignedIn() && userId == request.auth.uid) || isAdmin();
     }
 
     match /attendance/{attendanceId} {

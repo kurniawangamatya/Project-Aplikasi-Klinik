@@ -2154,7 +2154,7 @@ const CardItem: React.FC<CardItemProps> = ({ card, allLists, users, allowedNavs,
                                   {att.name}
                                 </span>
                                 <div className="flex items-center gap-3 mt-1">
-                                  <span className="text-[10px] text-zinc-600">Added {card.updatedAt?.toDate().toLocaleDateString()}</span>
+                                  <span className="text-[10px] text-zinc-600">Added {card.updatedAt ? (card.updatedAt.toDate ? card.updatedAt.toDate().toLocaleDateString() : new Date(card.updatedAt).toLocaleDateString()) : 'Baru saja'}</span>
                                   {isImage && (
                                     <button 
                                       onClick={() => toggleCover(idx)}
@@ -2460,7 +2460,7 @@ const CardItem: React.FC<CardItemProps> = ({ card, allLists, users, allowedNavs,
               <div className="text-center space-y-1 mb-8">
                 <h3 className="text-2xl font-black text-white tracking-tight">{previewImage.name}</h3>
                 <p className="text-sm text-zinc-500 font-bold">
-                  Added {card.updatedAt?.toDate().toLocaleString()} • {(previewImage.url.length / 1024 / 1024).toFixed(2)} MB
+                  Added {card.updatedAt ? (card.updatedAt.toDate ? card.updatedAt.toDate().toLocaleString() : new Date(card.updatedAt).toLocaleString()) : 'Baru saja'} • {(previewImage.url.length / 1024 / 1024).toFixed(2)} MB
                 </p>
               </div>
 

@@ -574,29 +574,6 @@ export default function Layout({ children, currentTab, setTab, boards, currentBo
           </div>
         </header>
 
-        {isQuotaExceeded && (
-          <div className="bg-amber-500/10 border-b border-amber-500/20 text-amber-700 dark:text-amber-400 px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0 transition-all font-sans z-30">
-            <div className="flex gap-3">
-              <span className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-amber-500/20 text-amber-500 mt-0.5">
-                ⚠
-              </span>
-              <div>
-                <h4 className="text-xs font-black uppercase tracking-wider text-amber-600 dark:text-amber-500">
-                  Mode Simulasi Lokal Aktif (Database Quota Reached)
-                </h4>
-                <p className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5 font-medium leading-relaxed">
-                  Batas kuota harian free-tier Google Cloud Firestore untuk database ini telah tercapai. <strong className="text-amber-700 dark:text-amber-400">Klinik telah dialihkan secara aman ke Mode Offline</strong> dengan database simulasi lokal otomatis. Anda tetap dapat melakukan transaksi kasir, input kpi tim, catat rekam odontogram pasien, dan cetak slip PDF tanpa hambatan!
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 shrink-0">
-              <span className="text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full bg-amber-550 dark:bg-amber-600/30 dark:border dark:border-amber-500 text-amber-800 dark:text-amber-400 shadow-sm animate-pulse">
-                simulasi offline
-              </span>
-            </div>
-          </div>
-        )}
-
         {children}
 
         {/* Mobile Bottom Navigation */}
@@ -643,7 +620,7 @@ export default function Layout({ children, currentTab, setTab, boards, currentBo
 
         {/* Status Bar */}
         <footer className="px-8 py-3 border-t border-zinc-200 dark:border-zinc-800 flex justify-between items-center text-[10px] text-zinc-400 dark:text-zinc-600 font-bold uppercase tracking-wider shrink-0 bg-zinc-50 dark:bg-zinc-950">
-          <div className="flex gap-6">
+          <div className="flex gap-6 items-center">
             {isQuotaExceeded ? (
               <span className="flex items-center gap-2 text-amber-600 dark:text-amber-500">
                 <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" /> 
@@ -655,6 +632,23 @@ export default function Layout({ children, currentTab, setTab, boards, currentBo
                 Sinkronisasi Cloud Aktif
               </span>
             )}
+            <span className="text-zinc-300 dark:text-zinc-850">|</span>
+            <button
+              onClick={() => {
+                const isForced = localStorage.getItem('force_local_simulation') === 'true';
+                if (isForced) {
+                  localStorage.removeItem('force_local_simulation');
+                } else {
+                  localStorage.setItem('force_local_simulation', 'true');
+                }
+                window.location.reload();
+              }}
+              className="px-2.5 py-1 rounded bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 transition-all uppercase text-[9px] font-black tracking-widest cursor-pointer active:scale-95"
+              title="Klik untuk mengubah mode penyimpanan database"
+            >
+              {localStorage.getItem('force_local_simulation') === 'true' ? "🔗 Aktifkan Cloud" : "💾 Aktifkan Mode Offline (Hemat Kuota)"}
+            </button>
+            <span className="text-zinc-300 dark:text-zinc-850">|</span>
             <span className="hover:text-zinc-600 dark:hover:text-zinc-400 cursor-help transition-colors">V: 2.0.4 Bento</span>
           </div>
           <div className="flex gap-8 italic font-medium normal-case tracking-normal text-zinc-400 dark:text-zinc-500">

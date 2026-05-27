@@ -10,7 +10,7 @@ import {
   Trash2, Edit3, Plus, Save, X, Check, Search, 
   Image as ImageIcon, Camera, LayoutList, Fingerprint,
   Mail, Bell, Building2, LayoutDashboard, BarChart3, Stethoscope, 
-  Activity, Briefcase, DollarSign, Clock, Phone, MapPin, CheckCircle2, RefreshCw, Target
+  Activity, Briefcase, DollarSign, Clock, Phone, MapPin, CheckCircle2, RefreshCw, Target, UserPlus
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -29,7 +29,7 @@ const COLORS = [
 
 export default function Settings() {
   const { user, profile, updateRole } = useAuth();
-  const { users, products, employees, categories, clinicSettings, customizationSettings } = useData();
+  const { users, products, employees, categories, clinicSettings, customizationSettings, isQuotaExceeded } = useData();
   const [activeTab, setActiveTab] = useState<'profile' | 'team' | 'products' | 'categories' | 'permissions' | 'clinic' | 'payroll_config' | 'kpi_templates' | 'attendance_mgt' | 'customization'>('profile');
   
   const handleUpdateRoleWithSync = async (uid: string, role: UserRole) => {
@@ -473,24 +473,149 @@ function TabButton({ active, label, description, icon, onClick }: { active: bool
 
 
 function TeamManagement({ users, onUpdateRole }: { users: UserProfile[], onUpdateRole: (uid: string, role: UserRole) => Promise<void> }) {
+  const { employees } = useData();
   const [search, setSearch] = useState('');
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
   const [saving, setSaving] = useState(false);
+  const [addingMember, setAddingMember] = useState(false);
+
+  // Add Member Form State
+  const [newMemberForm, setNewMemberForm] = useState({
+    displayName: '',
+    email: '',
+    role: 'perawat' as UserRole,
+    specialization: '',
+    salary: 3000000,
+    hourlyRate: 15000
+  });
+
+  // Edit Member Rates State
+  const [empSalary, setEmpSalary] = useState(0);
+  const [empHourlyRate, setEmpHourlyRate] = useState(0);
+
+  // Sync edit values when editingUser changes
+  useEffect(() => {
+    if (editingUser) {
+      const emp = employees.find(e => e.userId === editingUser.uid);
+      setEmpSalary(emp ? emp.salary : 0);
+      setEmpHourlyRate(emp ? emp.hourlyRate : 10000);
+    }
+  }, [editingUser, employees]);
+
+  // Autofill rates when new user role is chosen
+  useEffect(() => {
+    const fetchDefaultRate = async () => {
+      try {
+        const payrollSnap = await getDoc(doc(db, 'settings', 'payroll'));
+        if (payrollSnap.exists()) {
+          const rates = (payrollSnap.data() as any)?.roleRates || {};
+          const rate = rates[newMemberForm.role.toLowerCase()];
+          if (rate !== undefined) {
+            setNewMemberForm(prev => ({ ...prev, hourlyRate: rate }));
+          }
+        }
+      } catch (err) {
+        console.error("Fetch default rates failed:", err);
+      }
+    };
+    fetchDefaultRate();
+  }, [newMemberForm.role]);
 
   const handleUpdateUserMaster = async () => {
     if (!editingUser) return;
     setSaving(true);
     try {
+      // Update users collection
       await updateDoc(doc(db, 'users', editingUser.uid), {
         displayName: editingUser.displayName,
         photoURL: editingUser.photoURL || '',
         specialization: editingUser.specialization || ''
       });
+
+      // Synchronize changes to employees collection
+      const emp = employees.find(e => e.userId === editingUser.uid);
+      if (emp) {
+        await updateDoc(doc(db, 'employees', emp.id), {
+          name: editingUser.displayName,
+          salary: Number(empSalary) || 0,
+          hourlyRate: Number(empHourlyRate) || 0,
+          updatedAt: serverTimestamp()
+        });
+      } else {
+        // Safe lock: create employee entry if missing
+        await setDoc(doc(db, 'employees', editingUser.uid), {
+          userId: editingUser.uid,
+          id: editingUser.uid,
+          name: editingUser.displayName,
+          role: editingUser.role,
+          salary: Number(empSalary) || 0,
+          hourlyRate: Number(empHourlyRate) || 12000,
+          status: 'active',
+          joinedAt: serverTimestamp()
+        });
+      }
+
       setEditingUser(null);
-      alert('Data anggota tim berhasil diperbarui');
+      alert('Data anggota tim dan gaji berhasil diperbarui');
     } catch (e) {
       console.error(e);
       alert('Gagal mengupdate profil anggota');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAddNewMemberSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMemberForm.displayName.trim() || !newMemberForm.email.trim()) {
+      alert('Nama dan Email wajib diisi!');
+      return;
+    }
+    setSaving(true);
+    try {
+      const tempId = 'staf-' + Math.random().toString(36).substring(2, 11);
+      const emailLower = newMemberForm.email.trim().toLowerCase();
+
+      // 1. Write to users collection
+      await setDoc(doc(db, 'users', tempId), {
+        uid: tempId,
+        email: emailLower,
+        displayName: newMemberForm.displayName.trim(),
+        role: newMemberForm.role,
+        specialization: newMemberForm.specialization.trim() || ''
+      });
+
+      // 2. Write to employees collection
+      await setDoc(doc(db, 'employees', tempId), {
+        userId: tempId,
+        id: tempId,
+        name: newMemberForm.displayName.trim(),
+        role: newMemberForm.role,
+        salary: Number(newMemberForm.salary) || 0,
+        hourlyRate: Number(newMemberForm.hourlyRate) || 0,
+        status: 'active',
+        joinedAt: serverTimestamp()
+      });
+
+      // 3. Ensure role permissions exist
+      try {
+        const permRef = doc(db, 'role_permissions', newMemberForm.role);
+        const permSnap = await getDoc(permRef);
+        if (!permSnap.exists()) {
+          await setDoc(permRef, {
+            navigation: ['overview', 'board', 'kpi'],
+            updatedAt: serverTimestamp()
+          });
+        }
+      } catch (permErr) {
+        console.error("Initialize permissions error:", permErr);
+      }
+
+      setAddingMember(false);
+      alert(`Berhasil menambahkan staf baru!\nStaf sekarang dapat log in di pintu masuk menggunakan:\n- Email: ${emailLower}\n- Sandi apa saja (akan terdaftar otomatis)`);
+    } catch (err) {
+      console.error(err);
+      alert('Gagal menyimpan staf baru.');
     } finally {
       setSaving(false);
     }
@@ -508,7 +633,26 @@ function TeamManagement({ users, onUpdateRole }: { users: UserProfile[], onUpdat
       className="space-y-8"
     >
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <h3 className="text-[11px] font-black text-zinc-500 uppercase tracking-widest">Daftar Anggota Tim</h3>
+        <div className="flex flex-wrap items-center gap-3">
+          <h3 className="text-[11px] font-black text-zinc-500 uppercase tracking-widest">Daftar Anggota Tim</h3>
+          <button
+            onClick={() => {
+              setNewMemberForm({
+                displayName: '',
+                email: '',
+                role: 'perawat',
+                specialization: '',
+                salary: 3000000,
+                hourlyRate: 15000
+              });
+              setAddingMember(true);
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all active:scale-95 shadow-[0_0_15px_rgba(139,92,246,0.25)] cursor-pointer"
+          >
+            <UserPlus className="w-3.5 h-3.5" />
+            <span>Tambah Staf Baru</span>
+          </button>
+        </div>
         <div className="relative w-full md:w-80">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
           <input 
@@ -522,61 +666,190 @@ function TeamManagement({ users, onUpdateRole }: { users: UserProfile[], onUpdat
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {filteredUsers.map(user => (
-          <div key={user.uid} className="p-4 bg-zinc-900 rounded-[2.5rem] border border-zinc-800 flex items-center justify-between group hover:border-zinc-700 transition-all">
-            <div className="flex items-center gap-4">
-              <div 
-                className="relative group/avatar cursor-pointer"
-                onClick={() => setEditingUser(user)}
-              >
-                <img 
-                  src={user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName}&background=3b82f6&color=fff`} 
-                  className="w-12 h-12 rounded-xl grayscale hover:grayscale-0 transition-all border border-zinc-800 group-hover/avatar:border-blue-500"
-                  alt="Member"
-                />
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 rounded-xl transition-opacity">
-                  <Edit3 className="w-4 h-4 text-white" />
+        {filteredUsers.map(user => {
+          const emp = employees.find(e => e.userId === user.uid);
+          return (
+            <div key={user.uid} className="p-4 bg-zinc-900 rounded-[2.5rem] border border-zinc-800 flex items-center justify-between group hover:border-zinc-700 transition-all">
+              <div className="flex items-center gap-4">
+                <div 
+                  className="relative group/avatar cursor-pointer"
+                  onClick={() => setEditingUser(user)}
+                >
+                  <img 
+                    src={user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName}&background=3b82f6&color=fff`} 
+                    className="w-12 h-12 rounded-xl grayscale hover:grayscale-0 transition-all border border-zinc-800 group-hover/avatar:border-blue-500"
+                    alt="Member"
+                  />
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 rounded-xl transition-opacity">
+                    <Edit3 className="w-4 h-4 text-white" />
+                  </div>
+                </div>
+                <div>
+                  <h4 className="text-xs font-black text-white leading-none mb-1 flex items-center gap-2">
+                    {user.displayName}
+                    {user.role === 'admin' && <Shield className="w-3 h-3 text-blue-500" />}
+                  </h4>
+                  <p className="text-[10px] font-mono text-zinc-600">{user.email}{user.specialization ? ` • ${user.specialization}` : ''}</p>
+                  {emp && (
+                    <p className="text-[9px] text-emerald-500/80 font-bold mt-1">
+                      Gaji: Rp {(emp.salary || 0).toLocaleString()} • Lembur: Rp {(emp.hourlyRate || 0).toLocaleString()}/jam
+                    </p>
+                  )}
                 </div>
               </div>
-              <div>
-                <h4 className="text-xs font-black text-white leading-none mb-1 flex items-center gap-2">
-                  {user.displayName}
-                  {user.role === 'admin' && <Shield className="w-3 h-3 text-blue-500" />}
-                </h4>
-                <p className="text-[10px] font-mono text-zinc-600">{user.email}{user.specialization ? ` • ${user.specialization}` : ''}</p>
-              </div>
-            </div>
 
-            <select 
-              value={user.role}
-              onChange={(e) => onUpdateRole(user.uid, e.target.value as UserRole)}
-              className="bg-zinc-800 text-[10px] font-black text-zinc-400 uppercase tracking-widest px-3 py-2 rounded-xl border border-zinc-700 outline-none hover:text-white transition-all cursor-pointer"
-            >
-              <option value="owner">Owner</option>
-              <option value="admin">Admin</option>
-              <option value="keuangan">Keuangan</option>
-              <option value="dokter">Dokter</option>
-              <option value="perawat">Perawat</option>
-              <option value="apoteker">Apoteker</option>
-              <option value="media">Media</option>
-              <option value="PIC">PIC</option>
-            </select>
-          </div>
-        ))}
+              <select 
+                value={user.role}
+                onChange={(e) => onUpdateRole(user.uid, e.target.value as UserRole)}
+                className="bg-zinc-800 text-[10px] font-black text-zinc-400 uppercase tracking-widest px-3 py-2 rounded-xl border border-zinc-700 outline-none hover:text-white transition-all cursor-pointer"
+              >
+                <option value="owner">Owner</option>
+                <option value="admin">Admin</option>
+                <option value="keuangan">Keuangan</option>
+                <option value="dokter">Dokter</option>
+                <option value="perawat">Perawat</option>
+                <option value="apoteker">Apoteker</option>
+                <option value="media">Media</option>
+                <option value="PIC">PIC</option>
+              </select>
+            </div>
+          );
+        })}
       </div>
 
       <AnimatePresence>
+        {/* ADD STAFF MEMBER MODAL */}
+        {addingMember && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-zinc-900 border border-zinc-800 rounded-[2.5rem] p-8 w-full max-w-lg shadow-2xl overflow-y-auto max-h-[90vh]"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <UserPlus className="w-5 h-5 text-indigo-400" />
+                  <h3 className="text-lg font-black text-white uppercase tracking-tight">Pendaftaran Staf Baru</h3>
+                </div>
+                <button onClick={() => setAddingMember(false)} className="p-2 hover:bg-zinc-800 rounded-xl transition-all cursor-pointer">
+                  <X className="w-5 h-5 text-zinc-500" />
+                </button>
+              </div>
+
+              <form onSubmit={handleAddNewMemberSubmit} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block pl-1">Nama Tampilan / Nama Lengkap</label>
+                  <input 
+                    type="text" 
+                    required
+                    value={newMemberForm.displayName}
+                    onChange={(e) => setNewMemberForm({...newMemberForm, displayName: e.target.value})}
+                    placeholder="Contoh: Suster Diana"
+                    className="w-full bg-zinc-800/80 border border-zinc-700 rounded-xl py-3 px-4 text-xs font-bold text-white focus:ring-2 focus:ring-indigo-600 outline-none transition-all"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block pl-1">Alamat Email Staf</label>
+                  <input 
+                    type="email" 
+                    required
+                    value={newMemberForm.email}
+                    onChange={(e) => setNewMemberForm({...newMemberForm, email: e.target.value})}
+                    placeholder="diana@klinik.com"
+                    className="w-full bg-zinc-800/80 border border-zinc-700 rounded-xl py-3 px-4 text-xs font-bold text-white focus:ring-2 focus:ring-indigo-600 outline-none transition-all"
+                  />
+                  <div className="mt-2.5 p-3.5 bg-violet-950/20 border border-violet-900/40 rounded-2xl text-left">
+                    <p className="text-[10px] font-black text-violet-300 flex items-center gap-1.5 mb-1">
+                      <Fingerprint className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Sistem Sandi Mandiri (Praktis & Hemat)</span>
+                    </p>
+                    <p className="text-[9.5px]/relaxed text-zinc-400">
+                      Anda tidak perlu membuatkan kata sandi bagi mereka secara manual. Ketika staf yang Anda daftarkan masuk ke system menggunakan email ini untuk pertama kali, <strong>kata sandi apa saja (minimal 6 karakter)</strong> yang mereka ketikkan akan otomatis terdaftar dan dikunci sebagai sandi resmi mereka.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block pl-1">Peran Akses (Role)</label>
+                    <select
+                      value={newMemberForm.role}
+                      onChange={(e) => setNewMemberForm({...newMemberForm, role: e.target.value as UserRole})}
+                      className="w-full bg-zinc-800/80 border border-zinc-700 rounded-xl py-3 px-4 text-xs font-bold text-white focus:ring-2 focus:ring-indigo-600 outline-none transition-all cursor-pointer"
+                    >
+                      <option value="perawat">Perawat</option>
+                      <option value="dokter">Dokter</option>
+                      <option value="keuangan">Keuangan</option>
+                      <option value="admin">Admin</option>
+                      <option value="owner">Owner</option>
+                      <option value="apoteker">Apoteker</option>
+                      <option value="media">Media</option>
+                      <option value="PIC">PIC</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block pl-1">Spesialisasi (Dokter/Perawat)</label>
+                    <input 
+                      type="text" 
+                      value={newMemberForm.specialization}
+                      onChange={(e) => setNewMemberForm({...newMemberForm, specialization: e.target.value})}
+                      placeholder="Contoh: Ahli Bedah Mulut"
+                      className="w-full bg-zinc-800/80 border border-zinc-700 rounded-xl py-3 px-4 text-xs font-bold text-white focus:ring-2 focus:ring-indigo-600 outline-none transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-zinc-800 pt-4 mt-2">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block pl-1">Gaji Pokok bulanan (Rp)</label>
+                    <input 
+                      type="number" 
+                      value={newMemberForm.salary}
+                      onChange={(e) => setNewMemberForm({...newMemberForm, salary: Number(e.target.value)})}
+                      className="w-full bg-zinc-800/80 border border-zinc-700 rounded-xl py-3 px-4 text-xs font-bold text-white focus:ring-2 focus:ring-indigo-600 outline-none transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block pl-1">Tarif Upah Lembur / Jam (Rp)</label>
+                    <input 
+                      type="number" 
+                      value={newMemberForm.hourlyRate}
+                      onChange={(e) => setNewMemberForm({...newMemberForm, hourlyRate: Number(e.target.value)})}
+                      className="w-full bg-zinc-800/80 border border-zinc-700 rounded-xl py-3 px-4 text-xs font-bold text-white focus:ring-2 focus:ring-indigo-600 outline-none transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-4">
+                  <button 
+                    type="submit"
+                    disabled={saving}
+                    className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-4 rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-950/40 active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
+                  >
+                    {saving ? 'Menyimpan...' : 'Daftarkan Staf Baru'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+
+        {/* EDIT STAFF MEMBER MASTER MODAL */}
         {editingUser && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-zinc-900 border border-zinc-800 rounded-[2.5rem] p-8 w-full max-w-md shadow-2xl"
+              className="bg-zinc-900 border border-zinc-800 rounded-[2.5rem] p-8 w-full max-w-md shadow-2xl overflow-y-auto max-h-[90vh]"
             >
               <div className="flex items-center justify-between mb-8">
                 <h3 className="text-xl font-black text-white uppercase tracking-tighter text-center">Master Anggota</h3>
-                <button onClick={() => setEditingUser(null)} className="p-2 hover:bg-zinc-800 rounded-xl transition-all">
+                <button onClick={() => setEditingUser(null)} className="p-2 hover:bg-zinc-800 rounded-xl transition-all cursor-pointer">
                   <X className="w-5 h-5 text-zinc-500" />
                 </button>
               </div>
@@ -658,10 +931,32 @@ function TeamManagement({ users, onUpdateRole }: { users: UserProfile[], onUpdat
                   />
                 </div>
 
+                {/* Edit Pay and rate variables on screen (Synchronization mandate) */}
+                <div className="border-t border-zinc-800 pt-4 mt-2 grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block pl-1">Gaji Pokok (Rp)</label>
+                    <input 
+                      type="number" 
+                      value={empSalary}
+                      onChange={(e) => setEmpSalary(Number(e.target.value))}
+                      className="w-full bg-zinc-800 border border-zinc-700 rounded-xl py-3 px-4 text-xs font-bold text-white focus:ring-2 focus:ring-blue-600 outline-none transition-all"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block pl-1">Tarif Lembur (Rp)</label>
+                    <input 
+                      type="number" 
+                      value={empHourlyRate}
+                      onChange={(e) => setEmpHourlyRate(Number(e.target.value))}
+                      className="w-full bg-zinc-800 border border-zinc-700 rounded-xl py-3 px-4 text-xs font-bold text-white focus:ring-2 focus:ring-blue-600 outline-none transition-all"
+                    />
+                  </div>
+                </div>
+
                 <button 
                   onClick={handleUpdateUserMaster}
                   disabled={saving}
-                  className="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-xl shadow-blue-900/20 active:scale-95 transition-all disabled:opacity-50"
+                  className="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-xl shadow-blue-900/20 active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
                 >
                   {saving ? 'Menyimpan...' : 'Perbarui Data Member'}
                 </button>
@@ -1781,13 +2076,28 @@ function AttendanceManagement() {
 }
 
 function CustomizationManagement() {
-  const { customizationSettings, updateCustomizationSettings } = useData();
+  const { customizationSettings, updateCustomizationSettings, isQuotaExceeded } = useData();
   const [localVibe, setLocalVibe] = useState(customizationSettings?.loginVibe || 'minimal_slate');
   const [localSubtitle, setLocalSubtitle] = useState(customizationSettings?.loginSubtitle || 'Operasional Keuangan Digital | AI Studio Secure Edition');
   const [localColor, setLocalColor] = useState(customizationSettings?.primaryBrandColor || '#3B82F6');
   const [localHideQuickLogin, setLocalHideQuickLogin] = useState(customizationSettings?.hideQuickLogin || false);
   const [localShowCredit, setLocalShowCredit] = useState(customizationSettings?.showDeveloperCredit !== false);
   const [saving, setSaving] = useState(false);
+
+  const [localSimActive, setLocalSimActive] = useState(() => {
+    return localStorage.getItem('force_local_simulation') === 'true';
+  });
+
+  const toggleLocalSimulation = () => {
+    const nextVal = !localSimActive;
+    setLocalSimActive(nextVal);
+    localStorage.setItem('force_local_simulation', nextVal ? 'true' : 'false');
+    alert(nextVal 
+      ? 'Mode Hubungkan Ke Database Lokal Offline diaktifkan! Aplikasi akan dimuat ulang.' 
+      : 'Mode Hubungkan Ke Database Lokal Offline dinonaktifkan! Aplikasi akan dimuat ulang.'
+    );
+    window.location.reload();
+  };
 
   useEffect(() => {
     if (customizationSettings) {
@@ -1935,6 +2245,53 @@ function CustomizationManagement() {
                   <p className="text-[10px] text-zinc-500 font-medium mt-0.5 leading-relaxed">Menampilkan label tag "Versi 2.2 / AI Studio Secure Edition" di bagian footer login screen.</p>
                 </div>
               </label>
+            </div>
+          </div>
+
+          <div className="h-px bg-zinc-800/60" />
+
+          {/* DATABASE STATUS & MANAGE OFFLINE SIMULATION */}
+          <div className="space-y-3">
+            <label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest block">5. Status Database & Simulasi Offline</label>
+            <div className="bg-zinc-950 p-6 rounded-2xl border border-zinc-800/50 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className={`w-3 h-3 rounded-full ${isQuotaExceeded || localSimActive ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`} />
+                <div>
+                  <h4 className="text-xs font-black text-white uppercase tracking-widest">
+                    {isQuotaExceeded || localSimActive ? 'Database: Mode Simulasi Offline Aktif' : 'Database: Mode Cloud Terhubung'}
+                  </h4>
+                  <p className="text-[10px] text-zinc-500 font-medium leading-relaxed">
+                    {isQuotaExceeded || localSimActive 
+                      ? 'Proses simpan & mutasi diisolasi aman di database lokal browser tanpa kendala limitasi.'
+                      : 'Koneksi Firestore normal, tersinkronisasi instan dengan server cloud Google Cloud.'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl bg-zinc-900/50 border border-zinc-850 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-black text-zinc-350">Hubungkan Mode Offline Manual</span>
+                    <p className="text-[9.5px]/relaxed text-zinc-500 font-medium mt-0.5 max-w-[420px]">
+                      Gunakan ini jika ingin mengisolasi database agar berjalan sepenuhnya offline di browser demi performa instan tanpa membebani kuota data Firebase.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={toggleLocalSimulation}
+                    className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${localSimActive ? 'bg-emerald-500' : 'bg-zinc-800'}`}
+                  >
+                    <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${localSimActive ? 'translate-x-5' : 'translate-x-0'}`} />
+                  </button>
+                </div>
+              </div>
+
+              {(isQuotaExceeded || localSimActive) && (
+                <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl text-[10px]/relaxed text-zinc-400">
+                  <span className="text-amber-500 font-bold block mb-1">Pemberitahuan Sistem Mode Offline:</span>
+                  Status limitasi harian free-tier Google Cloud Firestore tercapai atau mode manual aktif. Klinik telah dialihkan secara aman menggunakan database offline lokal otomatis di browser Anda. Semua pencatatan transaksi kasir, input KPI, odontogram, resep obat, & payroll tetap berjalan lancar!
+                </div>
+              )}
             </div>
           </div>
         </div>

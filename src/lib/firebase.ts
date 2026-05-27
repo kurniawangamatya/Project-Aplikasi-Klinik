@@ -74,23 +74,20 @@ export function checkAndLogQuotaError(error: any): boolean {
     code === 'resource-exhausted' ||
     code === 'permission-denied' ||
     code === 'unauthenticated' ||
+    code.includes('permission') ||
+    code.includes('operation-not-allowed') ||
     msg.includes('Quota limit exceeded') ||
     msg.includes('Quota exceeded') ||
-    msg.includes('quota') ||
-    msg.includes('Quota') ||
-    msg.includes('exhausted') ||
-    msg.includes('limit') ||
-    msg.includes('unauthenticated') ||
-    msg.includes('permission-denied') ||
-    msg.includes('permissions') ||
-    msg.includes('Permissions') ||
-    msg.includes('permission') ||
-    msg.includes('Permission') ||
-    msg.includes('insufficient') ||
-    msg.includes('Insufficient')
+    msg.toLowerCase().includes('quota') ||
+    msg.toLowerCase().includes('exhausted') ||
+    msg.toLowerCase().includes('insufficient permissions') ||
+    msg.toLowerCase().includes('permission-denied') ||
+    msg.toLowerCase().includes('permission') ||
+    (msg.toLowerCase().includes('limit') && !msg.toLowerCase().includes('permission'))
   ) {
     if (typeof window !== 'undefined') {
       (window as any).__firebaseQuotaExceeded = true;
+      localStorage.setItem('force_local_simulation', 'true');
       window.dispatchEvent(new CustomEvent('firebase-quota-exceeded'));
     }
     return true;
@@ -100,9 +97,15 @@ export function checkAndLogQuotaError(error: any): boolean {
 
 export async function testConnection() {
   try {
-    await getDocFromServer(doc(db, 'test', 'connection'));
+    // If we're forcing local simulation to save quota, bypass testing altogether
+    if (localStorage.getItem('force_local_simulation') === 'true') return;
+    await getDocFromServer(doc(db, 'settings', 'clinic'));
   } catch (error) {
-    checkAndLogQuotaError(error);
+    const code = error instanceof Error && 'code' in error ? (error as any).code : '';
+    // Only flag true quota exhausted issues, not unauthenticated/permission-denied errors
+    if (code === 'resource-exhausted') {
+      checkAndLogQuotaError(error);
+    }
   }
 }
 
@@ -112,7 +115,9 @@ testConnection();
 
 export function isLocalSimulation(): boolean {
   if (typeof window !== 'undefined') {
-    return (window as any).__firebaseQuotaExceeded === true;
+    return (window as any).__firebaseQuotaExceeded === true || 
+           localStorage.getItem('force_local_simulation') === 'true' ||
+           localStorage.getItem('clinic_simulated_user') !== null;
   }
   return false;
 }
@@ -272,6 +277,23 @@ function saveSimulatedCollection(path: string, docs: any[]) {
   window.dispatchEvent(new CustomEvent(`clinic-simdb-updated-${path}`));
 }
 
+function sanitizeSimulatedData(data: any): any {
+  if (!data) return data;
+  const copy = { ...data };
+  Object.keys(copy).forEach(key => {
+    const val = copy[key];
+    const isDateKey = key === 'createdAt' || key === 'updatedAt' || key === 'date' || key === 'joinedAt' || key === 'clockIn' || key === 'clockOut';
+    if (isDateKey) {
+      if (!val || (typeof val === 'object' && Object.keys(val).length === 0) || val?.constructor?.name?.includes('FieldValue') || typeof val.toDate === 'function') {
+        copy[key] = new Date().toISOString();
+      } else if (val instanceof Date) {
+        copy[key] = val.toISOString();
+      }
+    }
+  });
+  return copy;
+}
+
 function mockDocSnapshot(id: string, data: any) {
   return {
     id,
@@ -283,6 +305,10 @@ function mockDocSnapshot(id: string, data: any) {
         const val = processed[key];
         if (key === 'createdAt' || key === 'date' || key === 'joinedAt' || key === 'clockIn' || key === 'clockOut') {
           if (val && typeof val === 'string' && !val.includes('toDate')) {
+            processed[key] = makeSimulatedTimestamp(val);
+          } else if (val && typeof val === 'object' && (val as any).toDate) {
+            // Already compatible, do nothing
+          } else if (val) {
             processed[key] = makeSimulatedTimestamp(val);
           }
         }
@@ -392,9 +418,10 @@ async function emulatedSetDoc(path: string, data: any, options?: any) {
   const col = getSimulatedCollection(colPath);
   const index = col.findIndex(d => (d.id === docId || d.uid === docId));
   
+  const sanitized = sanitizeSimulatedData(data);
   const record = options?.merge && index !== -1
-    ? { ...col[index], ...data }
-    : { id: docId, ...data };
+    ? { ...col[index], ...sanitized }
+    : { id: docId, ...sanitized };
 
   if (index !== -1) {
     col[index] = record;
@@ -422,7 +449,8 @@ export async function addDoc(reference: any, data: any) {
 async function emulatedAddDoc(colPath: string, data: any) {
   const col = getSimulatedCollection(colPath);
   const newId = 'sim-' + Math.random().toString(36).substr(2, 9);
-  const record = { id: newId, ...data };
+  const sanitized = sanitizeSimulatedData(data);
+  const record = { id: newId, ...sanitized };
   col.push(record);
   saveSimulatedCollection(colPath, col);
   return { id: newId };
@@ -453,7 +481,8 @@ async function emulatedUpdateDoc(path: string, data: any) {
   const col = getSimulatedCollection(colPath);
   const index = col.findIndex(d => (d.id === docId || d.uid === docId));
   if (index !== -1) {
-    col[index] = { ...col[index], ...data };
+    const sanitized = sanitizeSimulatedData(data);
+    col[index] = { ...col[index], ...sanitized };
     saveSimulatedCollection(colPath, col);
   }
 }

@@ -113,18 +113,18 @@ function DoctorCard({ doctor, allSales, employees, onViewMore }: DoctorCardProps
             <div className="relative z-10">
               <p className="text-[10px] font-black uppercase text-cyan-100 tracking-[0.2em] mb-2 drop-shadow-sm">Total Estimasi Pendapatan</p>
               <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-black font-mono">Rp {stats.totalUpah.toLocaleString()}</span>
+                <span className="text-2xl font-black font-mono">Rp {(stats.totalUpah || 0).toLocaleString()}</span>
                 <span className="text-[10px] font-bold text-cyan-100 opacity-60">/ Bulan</span>
               </div>
               <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between text-[8px] font-black uppercase tracking-widest text-cyan-200">
                 <div className="flex flex-col gap-0.5">
                   <span className="opacity-60">Gaji Pokok</span>
-                  <span>Rp {stats.ud.toLocaleString()}</span>
+                  <span>Rp {(stats.ud || 0).toLocaleString()}</span>
                 </div>
                 <div className="w-px h-6 bg-white/10" />
                 <div className="flex flex-col gap-0.5 text-right">
                   <span className="opacity-60">Komisi Jasa</span>
-                  <span>Rp {stats.jasaMedis.toLocaleString()}</span>
+                  <span>Rp {(stats.jasaMedis || 0).toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -133,7 +133,7 @@ function DoctorCard({ doctor, allSales, employees, onViewMore }: DoctorCardProps
           <div className="flex items-center justify-between p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
             <div>
               <p className="text-[8px] font-black uppercase text-slate-400 tracking-widest mb-1">Omset Kotor</p>
-              <p className="text-sm font-black text-slate-900 font-mono">Rp {stats.omsetKotor.toLocaleString()}</p>
+              <p className="text-sm font-black text-slate-900 font-mono">Rp {(stats.omsetKotor || 0).toLocaleString()}</p>
             </div>
             <TrendingUp className="w-4 h-4 text-emerald-500" />
           </div>
@@ -141,7 +141,7 @@ function DoctorCard({ doctor, allSales, employees, onViewMore }: DoctorCardProps
           <div className="flex items-center justify-between p-4 bg-cyan-50/30 rounded-2xl border border-cyan-100">
             <div>
               <p className="text-[8px] font-black uppercase text-cyan-600 tracking-widest mb-1">Margin Klinik</p>
-              <p className="text-sm font-black text-cyan-700 font-mono">Rp {stats.labaKlinik.toLocaleString()}</p>
+              <p className="text-sm font-black text-cyan-700 font-mono">Rp {(stats.labaKlinik || 0).toLocaleString()}</p>
             </div>
             <Activity className="w-4 h-4 text-cyan-600" />
           </div>
@@ -883,7 +883,7 @@ export default function DoctorReport() {
                 value={stats.totalUpah} 
                 icon={<DollarSign className="w-5 h-5 text-white" />}
                 color="bg-cyan-600"
-                secondary={`Rp ${stats.totalUpah.toLocaleString()}`}
+                secondary={`Rp ${(stats.totalUpah || 0).toLocaleString()}`}
               />
               <StatCard 
                 title="Total Omset Dokter" 
@@ -891,7 +891,7 @@ export default function DoctorReport() {
                 icon={<TrendingUp className="w-5 h-5 text-emerald-600" />}
                 color="bg-emerald-50"
                 textColor="text-emerald-700"
-                secondary={`Rp ${stats.omsetKotor.toLocaleString()}`}
+                secondary={`Rp ${(stats.omsetKotor || 0).toLocaleString()}`}
               />
               <StatCard 
                 title="Jasa Medis Dokter" 
@@ -899,7 +899,7 @@ export default function DoctorReport() {
                 icon={<Award className="w-5 h-5 text-purple-600" />}
                 color="bg-purple-50"
                 textColor="text-purple-700"
-                secondary={`Rp ${stats.jasaMedis.toLocaleString()}`}
+                secondary={`Rp ${(stats.jasaMedis || 0).toLocaleString()}`}
               />
               <StatCard 
                 title="UD Dokter Per Bulan" 
@@ -907,7 +907,7 @@ export default function DoctorReport() {
                 icon={<Briefcase className="w-5 h-5 text-orange-600" />}
                 color="bg-orange-50"
                 textColor="text-orange-700"
-                secondary={`Rp ${stats.udPerBulan.toLocaleString()}`}
+                secondary={`Rp ${(stats.udPerBulan || 0).toLocaleString()}`}
               />
               <StatCard 
                 title="Rata-rata Upah/Hari" 
@@ -915,7 +915,7 @@ export default function DoctorReport() {
                 icon={<BarChart3 className="w-5 h-5 text-blue-600" />}
                 color="bg-blue-50"
                 textColor="text-blue-700"
-                secondary={`Rp ${Math.round(stats.avgUpahPerHari).toLocaleString()}`}
+                secondary={`Rp ${Math.round(stats.avgUpahPerHari || 0).toLocaleString()}`}
               />
             </div>
 
@@ -981,7 +981,7 @@ export default function DoctorReport() {
                   </ResponsiveContainer>
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Upah</span>
-                    <span className="text-lg font-black text-slate-900 font-mono">Rp {stats.totalUpah.toLocaleString()}</span>
+                    <span className="text-lg font-black text-slate-900 font-mono">Rp {(stats.totalUpah || 0).toLocaleString()}</span>
                   </div>
                 </div>
                 <div className="flex justify-center gap-6 mt-4">
@@ -1044,17 +1044,17 @@ export default function DoctorReport() {
                       <tbody className="divide-y divide-slate-50">
                         <tr>
                           <td className="px-6 py-4 text-xs font-bold text-slate-700">Jasa Medis Dokter</td>
-                          <td className="px-6 py-4 text-xs font-mono text-slate-600 text-right">Rp {stats.jasaMedis.toLocaleString()}</td>
-                          <td className="px-6 py-4 text-xs font-black text-slate-400 text-right">{(stats.jasaMedis / stats.totalUpah * 100).toFixed(1)}%</td>
+                          <td className="px-6 py-4 text-xs font-mono text-slate-600 text-right">Rp {(stats.jasaMedis || 0).toLocaleString()}</td>
+                          <td className="px-6 py-4 text-xs font-black text-slate-400 text-right">{((stats.jasaMedis || 0) / (stats.totalUpah || 1) * 100).toFixed(1)}%</td>
                         </tr>
                         <tr>
                           <td className="px-6 py-4 text-xs font-bold text-slate-700">UD Dokter per Bulan</td>
-                          <td className="px-6 py-4 text-xs font-mono text-slate-600 text-right">Rp {stats.udPerBulan.toLocaleString()}</td>
-                          <td className="px-6 py-4 text-xs font-black text-slate-400 text-right">{(stats.udPerBulan / stats.totalUpah * 100).toFixed(1)}%</td>
+                          <td className="px-6 py-4 text-xs font-mono text-slate-600 text-right">Rp {(stats.udPerBulan || 0).toLocaleString()}</td>
+                          <td className="px-6 py-4 text-xs font-black text-slate-400 text-right">{((stats.udPerBulan || 0) / (stats.totalUpah || 1) * 100).toFixed(1)}%</td>
                         </tr>
                         <tr className="bg-cyan-50/30">
                           <td className="px-6 py-5 text-xs font-black text-cyan-600 uppercase tracking-widest">Total Upah Dokter</td>
-                          <td className="px-6 py-5 text-sm font-black text-cyan-700 font-mono text-right">Rp {stats.totalUpah.toLocaleString()}</td>
+                          <td className="px-6 py-5 text-sm font-black text-cyan-700 font-mono text-right">Rp {(stats.totalUpah || 0).toLocaleString()}</td>
                           <td className="px-6 py-5 text-xs font-black text-cyan-500 text-right">100%</td>
                         </tr>
                       </tbody>
@@ -1080,17 +1080,17 @@ export default function DoctorReport() {
                       <tbody className="divide-y divide-slate-50">
                         <tr>
                           <td className="px-6 py-4 text-xs font-bold text-slate-700">Biaya Sebelum Diskon</td>
-                          <td className="px-6 py-4 text-xs font-mono text-slate-600 text-right">Rp {stats.omsetKotor.toLocaleString()}</td>
+                          <td className="px-6 py-4 text-xs font-mono text-slate-600 text-right">Rp {(stats.omsetKotor || 0).toLocaleString()}</td>
                           <td className="px-6 py-4 text-xs font-black text-slate-400 text-right">100%</td>
                         </tr>
                         <tr>
                           <td className="px-6 py-4 text-xs font-bold text-slate-700 text-emerald-600">Biaya Setelah Diskon</td>
-                          <td className="px-6 py-4 text-xs font-mono text-emerald-600 text-right">Rp {stats.omsetBersih.toLocaleString()}</td>
-                          <td className="px-6 py-4 text-xs font-black text-emerald-500 text-right">{(stats.omsetBersih / stats.omsetKotor * 100).toFixed(1)}%</td>
+                          <td className="px-6 py-4 text-xs font-mono text-emerald-600 text-right">Rp {(stats.omsetBersih || 0).toLocaleString()}</td>
+                          <td className="px-6 py-4 text-xs font-black text-emerald-500 text-right">{((stats.omsetBersih || 0) / (stats.omsetKotor || 1) * 100).toFixed(1)}%</td>
                         </tr>
                         <tr className="bg-red-50/30">
                           <td className="px-6 py-4 text-xs font-bold text-red-600">Total Diskon</td>
-                          <td className="px-6 py-4 text-xs font-mono text-red-600 text-right">Rp {stats.totalDiscount.toLocaleString()}</td>
+                          <td className="px-6 py-4 text-xs font-mono text-red-600 text-right">Rp {(stats.totalDiscount || 0).toLocaleString()}</td>
                           <td className="px-6 py-4 text-xs font-black text-red-500 text-right">{(stats.totalDiscount / stats.omsetKotor * 100).toFixed(1)}%</td>
                         </tr>
                       </tbody>
@@ -1140,7 +1140,7 @@ export default function DoctorReport() {
                                   )}
                                 </td>
                                 <td className="px-6 py-4 text-xs font-black text-slate-900 font-mono text-right whitespace-nowrap">
-                                  Rp {sale.total.toLocaleString()}
+                                  Rp {(sale.total || 0).toLocaleString()}
                                 </td>
                                 <td className="px-6 py-4 text-right">
                                   <div className="flex items-center justify-end gap-1.5">
@@ -1211,7 +1211,7 @@ export default function DoctorReport() {
                         {sortedCategories.map((c, idx) => (
                           <tr key={idx} className="hover:bg-slate-50/50 transition-colors group/row">
                             <td className="px-6 py-4 text-xs font-bold text-slate-700">{c.name}</td>
-                            <td className="px-6 py-4 text-xs font-mono text-slate-600 text-right">Rp {c.totalWage.toLocaleString()}</td>
+                            <td className="px-6 py-4 text-xs font-mono text-slate-600 text-right">Rp {(c.totalWage || 0).toLocaleString()}</td>
                             <td className="px-6 py-4 text-xs font-black text-slate-400 text-right font-mono">
                               {stats.jasaMedis > 0 ? ((c.totalWage / stats.jasaMedis) * 100).toFixed(1) : '0.0'}%
                             </td>
@@ -1266,7 +1266,7 @@ export default function DoctorReport() {
                               <span className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">{idx + 1}</span>
                               <span className="text-slate-700 truncate max-w-[200px]">{t.name}</span>
                             </div>
-                            <span className="text-cyan-600 font-mono">Rp {t.totalWage.toLocaleString()}</span>
+                            <span className="text-cyan-600 font-mono">Rp {(t.totalWage || 0).toLocaleString()}</span>
                           </div>
                           <div className="h-1.5 w-full bg-slate-50 rounded-full border border-slate-100 overflow-hidden">
                             <motion.div 
@@ -1314,7 +1314,7 @@ export default function DoctorReport() {
                            <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
                            <div className="flex-1 min-w-0">
                               <p className="text-[10px] font-bold text-slate-500 truncate uppercase tracking-tight">{c.name}</p>
-                              <p className="text-[10px] font-black text-slate-900 font-mono">Rp {c.totalWage.toLocaleString()} ({(c.totalWage / stats.jasaMedis * 100).toFixed(0)}%)</p>
+                              <p className="text-[10px] font-black text-slate-900 font-mono">Rp {(c.totalWage || 0).toLocaleString()} ({((c.totalWage || 0) / (stats.jasaMedis || 1) * 100).toFixed(0)}%)</p>
                            </div>
                         </div>
                       ))}
@@ -1402,9 +1402,9 @@ export default function DoctorReport() {
                           <td className="px-6 py-4 text-xs font-bold text-slate-700">{t.name}</td>
                           <td className="px-6 py-4 text-[10px] font-medium text-slate-400 uppercase tracking-tight">{t.category}</td>
                           <td className="px-6 py-4 text-xs font-mono text-slate-600 text-right">{t.count}</td>
-                          <td className="px-6 py-4 text-xs font-mono text-slate-600 text-right">Rp {t.totalWage.toLocaleString()}</td>
+                          <td className="px-6 py-4 text-xs font-mono text-slate-600 text-right">Rp {(t.totalWage || 0).toLocaleString()}</td>
                           <td className="px-6 py-4 text-xs font-black text-slate-400 text-right">
-                            {stats.jasaMedis > 0 ? ((t.totalWage / stats.jasaMedis) * 100).toFixed(1) : '0.0'}%
+                             {stats.jasaMedis > 0 ? (((t.totalWage || 0) / stats.jasaMedis) * 100).toFixed(1) : '0.0'}%
                           </td>
                           <td className="px-6 py-4 text-center whitespace-nowrap">
                             <div className="flex items-center justify-center gap-1.5">

@@ -141,7 +141,7 @@ export default function KPITemplateManagement() {
                   <p className="text-[9px] font-bold text-zinc-600 uppercase tracking-tighter">Per {t.unit || 'tindakan'}</p>
                 </td>
                 <td className="px-8 py-4 text-right">
-                  <p className="text-xs font-black text-emerald-500 font-mono">Rp {t.price.toLocaleString()}</p>
+                  <p className="text-xs font-black text-emerald-500 font-mono">Rp {(t.price || 0).toLocaleString()}</p>
                 </td>
                 <td className="px-8 py-4 text-right overflow-hidden">
                   <div className="flex justify-end gap-2 translate-x-20 group-hover:translate-x-0 transition-transform">

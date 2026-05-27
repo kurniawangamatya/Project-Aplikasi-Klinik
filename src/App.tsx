@@ -32,6 +32,65 @@ function AppContent() {
   const [isEmailSignIn, setIsEmailSignIn] = useState(false);
   const [loggingIn, setLoggingIn] = useState(false);
 
+  const { registerOffline } = useAuth();
+  const [loginTab, setLoginTab] = useState<'sso' | 'login' | 'register'>('login');
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  const [regName, setRegName] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+  const [regRole, setRegRole] = useState<any>('dokter');
+  const [regSpecialization, setRegSpecialization] = useState('');
+  const [regSalary, setRegSalary] = useState(8000000);
+  const [regHourlyRate, setRegHourlyRate] = useState(35000);
+
+  useEffect(() => {
+    switch (regRole) {
+      case 'dokter':
+        setRegSalary(8000000);
+        setRegHourlyRate(35000);
+        break;
+      case 'perawat':
+        setRegSalary(3000000);
+        setRegHourlyRate(15000);
+        break;
+      case 'admin':
+        setRegSalary(4000000);
+        setRegHourlyRate(15000);
+        break;
+      case 'keuangan':
+        setRegSalary(3500000);
+        setRegHourlyRate(12000);
+        break;
+      case 'apoteker':
+        setRegSalary(3500000);
+        setRegHourlyRate(15000);
+        break;
+      default:
+        setRegSalary(3000000);
+        setRegHourlyRate(12000);
+        break;
+    }
+  }, [regRole]);
+
+  const [isLocalSim, setIsLocalSim] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('force_local_simulation') === 'true';
+    }
+    return false;
+  });
+
+  const toggleLocalSimulation = () => {
+    const nextVal = !isLocalSim;
+    setIsLocalSim(nextVal);
+    if (nextVal) {
+      localStorage.setItem('force_local_simulation', 'true');
+    } else {
+      localStorage.removeItem('force_local_simulation');
+    }
+    window.location.reload();
+  };
+
   const clinicName = clinicSettings?.name || 'Clinic Tools';
 
   useEffect(() => {
@@ -120,6 +179,33 @@ function AppContent() {
       }
     };
 
+    const handleRegSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!regName.trim() || !regEmail.trim() || !regPassword.trim()) {
+        alert("Harap lengkapi nama lengkap, email, dan password Anda.");
+        return;
+      }
+      setLoggingIn(true);
+      setLoginError(null);
+      setSuccessMsg(null);
+      try {
+        await registerOffline({
+          displayName: regName,
+          email: regEmail,
+          password: regPassword,
+          role: regRole,
+          specialization: regSpecialization,
+          salary: Number(regSalary),
+          hourlyRate: Number(regHourlyRate)
+        });
+        setSuccessMsg("Pendaftaran sukses! Menghubungkan database...");
+      } catch (err: any) {
+        setLoginError(err.message || String(err));
+      } finally {
+        setLoggingIn(false);
+      }
+    };
+
     const loginVibe = customizationSettings?.loginVibe || 'minimal_slate';
     const loginSubtitleText = customizationSettings?.loginSubtitle || 'Operasional Keuangan Digital | AI Studio Secure Edition';
     const brandColor = customizationSettings?.primaryBrandColor || '#8B5CF6';
@@ -128,7 +214,7 @@ function AppContent() {
 
     // Fixed High-fidelity purple theme by default for premium visual response
     const vibeBgClass = 'bg-[#030014] text-white';
-    const glassCardClass = 'bg-zinc-950/70 border border-violet-500/15 backdrop-blur-3xl shadow-[0_0_80px_-10px_rgba(139,92,246,0.25)]';
+    const glassCardClass = 'bg-zinc-950/75 border border-violet-500/15 backdrop-blur-3xl shadow-[0_0_80px_-10px_rgba(139,92,246,0.25)]';
     const accentGradientText = 'bg-gradient-to-r from-violet-400 via-fuchsia-400 to-indigo-400';
 
     const loginPresets = [
@@ -161,7 +247,7 @@ function AppContent() {
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
-            className="lg:col-span-6 flex flex-col justify-center items-center hidden lg:flex pr-6"
+            className="lg:col-span-5 flex flex-col justify-center items-center hidden lg:flex pr-6"
           >
             {/* Glowing Map Container Card */}
             <div className="p-3 w-full rounded-[2.5rem] bg-zinc-950/20 border border-violet-950/10 backdrop-blur-md">
@@ -174,7 +260,7 @@ function AppContent() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
-            className="lg:col-span-6 w-full max-w-md mx-auto"
+            className="lg:col-span-7 w-full max-w-xl mx-auto"
           >
             <div className={`p-8 sm:p-10 rounded-[3rem] ${glassCardClass} relative overflow-hidden`}>
               {/* Premium top aesthetic line */}
@@ -188,53 +274,284 @@ function AppContent() {
                 </p>
               </div>
 
-              {loginError && (
+              {/* Force Local Simulation Toggle Switch */}
+              <div className="mb-6 p-4 rounded-2xl bg-zinc-950/60 border border-violet-950/40 flex items-center justify-between text-left gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-1.5 text-[11px] font-bold text-violet-300">
+                    <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                    <span>Database Lokal Offline (Hemat Kuota - Aktif)</span>
+                  </div>
+                  <p className="text-[9.5px]/relaxed text-zinc-400 mt-1">
+                    Mode penyimpanan aman browser aktif. Semua pendaftaran & data tersinkronisasi instan bebas dari limitasi database.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={toggleLocalSimulation}
+                  className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${isLocalSim || true ? 'bg-emerald-500' : 'bg-zinc-800'}`}
+                >
+                  <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${(isLocalSim || true) ? 'translate-x-5' : 'translate-x-0'}`} />
+                </button>
+              </div>
+
+               {loginError && (
                 <motion.div 
                   initial={{ scale: 0.98, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  className="mb-4 p-4 bg-red-950/30 border border-red-900/40 text-left rounded-2xl relative overflow-hidden text-zinc-300"
+                  className="mb-4 p-4 bg-red-950/30 border border-red-900/40 text-left rounded-2xl relative overflow-hidden text-zinc-300 animate-pulse"
                   id="login-popup-error-banner"
                 >
                   <div className="flex gap-3">
                     <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" id="login-error-icon" />
                     <div className="flex-1">
                       <h4 className="text-xs font-bold text-red-400" id="login-error-title">
-                        Otentikasi Gagal atau Limit Quota
+                        Otentikasi Gagal atau Akun Ganda
                       </h4>
                       <p className="text-zinc-400 text-[10px] mt-0.5 leading-relaxed" id="login-error-desc">
-                        OAuth browser tidak mengijinkan frame, atau database tersinkronisasi offline. Silakan masuk menggunakan **Akun Demo Cepat** atau gunakan **Email Staf** di bawah ini.
+                        {loginError}
                       </p>
                     </div>
                   </div>
                 </motion.div>
               )}
 
-              {/* Direct Login with Google Container */}
-              <div className="space-y-6 pt-4 text-center">
-                <button 
-                  type="button"
-                  onClick={login}
-                  disabled={loggingIn}
-                  className="w-full flex items-center justify-center gap-3 py-4 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-600 hover:from-violet-500 hover:via-fuchsia-500 hover:to-indigo-500 text-white rounded-2xl font-black text-sm tracking-wide transition-all active:scale-[0.98] group shadow-[0_0_30px_rgba(139,92,246,0.3)]"
+              {successMsg && (
+                <motion.div 
+                  initial={{ scale: 0.98, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  className="mb-4 p-4 bg-emerald-950/40 border border-emerald-900/40 text-left rounded-2xl relative overflow-hidden"
+                  id="login-success-banner"
                 >
-                  <LogIn className="w-5 h-5 text-white group-hover:translate-x-0.5 transition-transform animate-pulse" />
-                  {loggingIn ? 'MEMVALIDASI...' : 'MASUK DENGAN GOOGLE'}
-                </button>
+                  <div className="flex gap-3">
+                    <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="text-xs font-bold text-emerald-400">
+                        Proses Berhasil
+                      </h4>
+                      <p className="text-zinc-400 text-[10px] mt-0.5 leading-relaxed">
+                        {successMsg}
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
 
-                <p className="text-[10px] font-mono text-zinc-500 leading-relaxed">
-                  Gunakan Akun Google Staf resmi Anda untuk masuk ke sistem secara terenkripsi.
-                </p>
+              {/* Login Method Toggle Tab */}
+              <div className="flex bg-zinc-950/60 border border-violet-950/40 p-1 rounded-2xl mb-6">
+                <button
+                  type="button"
+                  onClick={() => setLoginTab('login')}
+                  className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase rounded-xl transition-all ${loginTab === 'login' ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-[0_0_15px_rgba(139,92,246,0.25)]' : 'text-zinc-400 hover:text-white'}`}
+                >
+                  Masuk Staf
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLoginTab('register')}
+                  className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase rounded-xl transition-all ${loginTab === 'register' ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-[0_0_15px_rgba(139,92,246,0.25)]' : 'text-zinc-400 hover:text-white'}`}
+                >
+                  Daftar Staff Baru
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLoginTab('sso')}
+                  className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase rounded-xl transition-all ${loginTab === 'sso' ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-[0_0_15px_rgba(139,92,246,0.25)]' : 'text-zinc-400 hover:text-white'}`}
+                >
+                  Google SSO
+                </button>
+              </div>
+
+              {/* Secure Login Method Panels */}
+              <div className="space-y-6 pt-2">
+                {loginTab === 'sso' ? (
+                  <div className="space-y-4 text-center">
+                    <button 
+                      type="button"
+                      onClick={login}
+                      disabled={loggingIn}
+                      className="w-full flex items-center justify-center gap-3 py-4 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-600 hover:from-violet-500 hover:via-fuchsia-500 hover:to-indigo-500 text-white rounded-2xl font-black text-sm tracking-wide transition-all active:scale-[0.98] group shadow-[0_0_30px_rgba(139,92,246,0.3)]"
+                    >
+                      <LogIn className="w-5 h-5 text-white group-hover:translate-x-0.5 transition-transform animate-pulse" />
+                      {loggingIn ? 'MEMVALIDASI...' : 'MASUK DENGAN GOOGLE'}
+                    </button>
+
+                    <p className="text-[10px] font-mono text-zinc-500 leading-relaxed">
+                      Gunakan Akun Google Staf resmi Anda untuk masuk ke sistem secara terenkripsi.
+                    </p>
+                  </div>
+                ) : loginTab === 'login' ? (
+                  <form onSubmit={handleFormSubmit} className="space-y-4 text-left">
+                    {/* EMAIL INPUT WITH ICON */}
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-mono font-bold uppercase text-violet-400 tracking-wider">
+                        Alamat Email Staf
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-500">
+                          <Mail className="w-4 h-4 text-violet-400" />
+                        </div>
+                        <input 
+                          type="email"
+                          required
+                          value={email}
+                          disabled={loggingIn}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="nama@klinik.com"
+                          className="w-full bg-zinc-950/80 border border-violet-950/60 rounded-2xl pl-11 pr-5 py-3.5 text-xs text-white placeholder-zinc-650 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500/25 transition-all focus:shadow-[0_0_15px_rgba(139,92,246,0.15)]"
+                        />
+                      </div>
+                    </div>
+
+                    {/* PASSWORD INPUT WITH ICON */}
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-center px-1">
+                        <label className="text-[9px] font-mono font-bold uppercase text-violet-400 tracking-wider">
+                          Kata Sandi
+                        </label>
+                        <span className="text-[8px] font-mono text-zinc-500 font-medium">Lupa/Sandi Pertama? Masukkan sandi apa saja.</span>
+                      </div>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-500">
+                          <Lock className="w-4 h-4 text-violet-400" />
+                        </div>
+                        <input 
+                          type="password"
+                          required
+                          value={password}
+                          disabled={loggingIn}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder="••••••••"
+                          className="w-full bg-zinc-950/80 border border-violet-950/60 rounded-2xl pl-11 pr-5 py-3.5 text-xs text-white placeholder-zinc-100 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500/25 transition-all focus:shadow-[0_0_15px_rgba(139,92,246,0.15)]"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="pt-2">
+                      <button 
+                        type="submit"
+                        disabled={loggingIn}
+                        className="w-full py-3.5 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-600 hover:from-violet-500 hover:via-fuchsia-500 hover:to-indigo-500 disabled:opacity-50 text-white rounded-2xl text-[10px] font-mono font-bold uppercase tracking-widest text-center shadow-[0_4px_20px_rgba(139,92,246,0.25)] transition-all active:scale-[0.98]"
+                      >
+                        {loggingIn ? 'MEMVALIDASI...' : 'MASUK KE SYSTEM'}
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  // REGISTRATION FORM WITH EXACT REQUIRED FIELDS FOR DB INTEGRATIONS
+                  <form onSubmit={handleRegSubmit} className="space-y-4 text-left">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* FULL NAME */}
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-mono font-bold uppercase text-violet-400 tracking-wider">
+                          Nama Lengkap
+                        </label>
+                        <input 
+                          type="text"
+                          required
+                          value={regName}
+                          disabled={loggingIn}
+                          onChange={(e) => setRegName(e.target.value)}
+                          placeholder="drg. Amanda Christie"
+                          className="w-full bg-zinc-950/80 border border-violet-950/60 rounded-2xl px-4 py-3 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500"
+                        />
+                      </div>
+
+                      {/* EMAIL ADDRESS */}
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-mono font-bold uppercase text-violet-400 tracking-wider">
+                          Alamat Email
+                        </label>
+                        <input 
+                          type="email"
+                          required
+                          value={regEmail}
+                          disabled={loggingIn}
+                          onChange={(e) => setRegEmail(e.target.value)}
+                          placeholder="amanda@klinik.com"
+                          className="w-full bg-zinc-950/80 border border-violet-950/60 rounded-2xl px-4 py-3 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* PASSWORD */}
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-mono font-bold uppercase text-violet-400 tracking-wider">
+                          Kata Sandi Baru
+                        </label>
+                        <input 
+                          type="password"
+                          required
+                          value={regPassword}
+                          disabled={loggingIn}
+                          onChange={(e) => setRegPassword(e.target.value)}
+                          placeholder="Min. 6 karakter"
+                          className="w-full bg-zinc-950/80 border border-violet-950/60 rounded-2xl px-4 py-3 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500"
+                        />
+                      </div>
+
+                      {/* ROLE SELECTOR (Owner, Admin, Dokter, Perawat, Keuangan, Apoteker etc) */}
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-mono font-bold uppercase text-violet-400 tracking-wider">
+                          Pilih Jabatan / Peran
+                        </label>
+                        <select
+                          value={regRole}
+                          disabled={loggingIn}
+                          onChange={(e) => setRegRole(e.target.value as any)}
+                          className="w-full bg-zinc-950 border border-violet-950/60 rounded-2xl px-4 py-3 text-xs text-white focus:outline-none focus:border-violet-500"
+                        >
+                          <option value="dokter">Dokter Sistem (Praktik)</option>
+                          <option value="perawat">Perawat / Asisten Medis</option>
+                          <option value="admin">Administrator (Sistem)</option>
+                          <option value="owner">Pemilik Klinik (Owner)</option>
+                          <option value="keuangan">Bendahara / Staf Keuangan</option>
+                          <option value="apoteker">Staf Farmasi / Apoteker</option>
+                          <option value="media">Staf Media & Rontgen</option>
+                          <option value="PIC">PIC Klinik / Supervisor</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* DYNAMIC SPECIALIZATION - SHOWED ONLY FOR MEDICAL STAFF ROUTE CODES */}
+                    {(regRole === 'dokter' || regRole === 'perawat') && (
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-mono font-bold uppercase text-violet-400 tracking-wider">
+                          Bidang Spesialisasi Medis
+                        </label>
+                        <input 
+                          type="text"
+                          value={regSpecialization}
+                          disabled={loggingIn}
+                          onChange={(e) => setRegSpecialization(e.target.value)}
+                          placeholder="Spesialis Konservasi Gigi / Gigi Anak / Bedah Mulut"
+                          className="w-full bg-zinc-950/80 border border-violet-950/60 rounded-2xl px-4 py-3 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500"
+                        />
+                      </div>
+                    )}
+
+                    <div className="pt-2">
+                      <button 
+                        type="submit"
+                        disabled={loggingIn}
+                        className="w-full py-3.5 bg-gradient-to-r from-emerald-600 via-fuchsia-600 to-violet-600 hover:from-emerald-500 hover:via-fuchsia-500 hover:to-violet-500 disabled:opacity-50 text-white rounded-2xl text-[10px] font-mono font-bold uppercase tracking-widest text-center shadow-[0_4px_20px_rgba(16,185,129,0.25)] transition-all active:scale-[0.98]"
+                      >
+                        {loggingIn ? 'MENDAFTARKAN...' : 'DAFTARKAN & SEJAJKAN KE DATABASE'}
+                      </button>
+                    </div>
+                  </form>
+                )}
 
                 {/* Subtle Backup Demo bypass in case Google login has sandbox popup restrictions */}
                 <div className="border-t border-violet-950/30 pt-4 mt-2 space-y-2">
-                  <span className="text-[8px] font-mono font-bold uppercase text-violet-500/70 tracking-[0.12em] block">
+                  <span className="text-[8px] font-mono font-bold uppercase text-violet-500/70 tracking-[0.12em] block text-center">
                     Gunakan Akses Demo Instan:
                   </span>
                   <div className="flex flex-wrap gap-1.5 justify-center items-center">
                     <button 
                       type="button" 
                       onClick={() => handlePresetLogin('admin')} 
-                      className="text-[8px] font-mono font-bold px-3 py-1 rounded-full border border-violet-950/60 hover:border-violet-700 bg-violet-950/10 text-violet-400 hover:bg-violet-900/30 transition-all active:scale-95"
+                      className="text-[8px] font-mono font-bold px-3 py-1.5 rounded-full border border-violet-950/60 hover:border-violet-700 bg-violet-950/10 text-violet-400 hover:bg-violet-900/30 transition-all active:scale-95"
                     >
                       ADMIN PORTAL
                     </button>

@@ -976,7 +976,7 @@ export default function Cashier() {
                   <div className={cn("flex gap-6", viewMode === 'list' ? "items-center" : "flex-col space-y-3")}>
                     <div className="flex flex-col">
                       <span className="text-[10px] uppercase font-black text-slate-400 tracking-widest leading-none mb-1">Harga</span>
-                      <span className="text-emerald-500 font-bold text-sm">Rp {p.price.toLocaleString()}</span>
+                      <span className="text-emerald-500 font-bold text-sm">Rp {(p.price || 0).toLocaleString()}</span>
                     </div>
                     <div className="flex flex-col">
                       <span className="text-[10px] uppercase font-black text-slate-400 tracking-widest leading-none mb-1">
@@ -1090,7 +1090,7 @@ export default function Cashier() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h4 className="text-xs font-bold text-slate-900 truncate">{item.name}</h4>
-                  <p className="text-[10px] font-black text-emerald-500 uppercase mt-0.5 tracking-tight">Rp {item.price.toLocaleString()}</p>
+                  <p className="text-[10px] font-black text-emerald-500 uppercase mt-0.5 tracking-tight">Rp {(item.price || 0).toLocaleString()}</p>
                 </div>
                 <div className="flex items-center gap-3 bg-white p-1 rounded-xl shadow-sm border border-slate-200/50">
                   <button 
@@ -2111,15 +2111,15 @@ export default function Cashier() {
                       <div className="pt-4 border-t border-dashed border-slate-200 space-y-2">
                         <div className="flex justify-between text-xs font-bold text-slate-400">
                           <span>Subtotal</span>
-                          <span className="font-mono">Rp {lastTransaction.subtotal.toLocaleString()}</span>
+                          <span className="font-mono">Rp {(lastTransaction.subtotal || 0).toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between text-xs font-bold text-emerald-500">
                           <span>Diskon</span>
-                          <span className="font-mono">- Rp {lastTransaction.discount.toLocaleString()}</span>
+                          <span className="font-mono">- Rp {(lastTransaction.discount || 0).toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between items-center pt-2">
                           <span className="font-black text-slate-900 uppercase text-xs tracking-widest">Total Bayar</span>
-                          <span className="text-2xl font-black text-slate-900 font-mono tracking-tighter">Rp {lastTransaction.total.toLocaleString()}</span>
+                          <span className="text-2xl font-black text-slate-900 font-mono tracking-tighter">Rp {(lastTransaction.total || 0).toLocaleString()}</span>
                         </div>
                       </div>
 

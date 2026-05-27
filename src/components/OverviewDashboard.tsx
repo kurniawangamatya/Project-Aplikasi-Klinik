@@ -236,7 +236,7 @@ export default function OverviewDashboard({ setTab, boards, setCurrentBoardId }:
                           </p>
                         </div>
                       </div>
-                      <span className="text-xs font-mono font-black text-emerald-600 dark:text-emerald-500">Rp {sale.total.toLocaleString()}</span>
+                      <span className="text-xs font-mono font-black text-emerald-600 dark:text-emerald-500">Rp {(sale.total || 0).toLocaleString()}</span>
                     </div>
                   ))}
                   <button 

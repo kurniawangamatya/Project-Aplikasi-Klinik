@@ -163,7 +163,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     };
 
     window.addEventListener('firebase-quota-exceeded', handleQuotaExceededEvent);
-    if (typeof window !== 'undefined' && (window as any).__firebaseQuotaExceeded) {
+    if (typeof window !== 'undefined' && ((window as any).__firebaseQuotaExceeded || localStorage.getItem('force_local_simulation') === 'true')) {
       setIsQuotaExceeded(true);
       setLoadingStates({
         products: false,
@@ -198,10 +198,35 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       query(collection(db, 'users'), limit(500)), 
       (snap) => {
         const allUsers = snap.docs.map(d => ({ uid: d.id, ...d.data() } as UserProfile));
-        setUsers(allUsers);
-        setDoctors(allUsers.filter(u => u.role === 'dokter'));
-        setNurses(allUsers.filter(u => u.role === 'perawat'));
-        setLocalItem('users', allUsers);
+        
+        let offlineUsers: UserProfile[] = [];
+        try {
+          const saved = localStorage.getItem('clinic_local_registered_accounts');
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed)) {
+              offlineUsers = parsed.map(a => ({
+                uid: a.uid,
+                email: a.email,
+                displayName: a.displayName,
+                role: a.role,
+                specialization: a.specialization
+              }));
+            }
+          }
+        } catch (e) {}
+
+        const mergedUsers = [...allUsers];
+        offlineUsers.forEach(ou => {
+          if (!mergedUsers.some(mu => mu.email === ou.email)) {
+            mergedUsers.push(ou);
+          }
+        });
+
+        setUsers(mergedUsers);
+        setDoctors(mergedUsers.filter(u => u.role === 'dokter'));
+        setNurses(mergedUsers.filter(u => u.role === 'perawat'));
+        setLocalItem('users', mergedUsers);
         setLoadingStates(prev => ({ ...prev, users: false }));
       },
       (error) => {
@@ -230,8 +255,36 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       query(collection(db, 'employees'), limit(200)), 
       (snap) => {
         const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        setEmployees(data);
-        setLocalItem('employees', data);
+        
+        let offlineEmps: any[] = [];
+        try {
+          const saved = localStorage.getItem('clinic_local_registered_accounts');
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed)) {
+              offlineEmps = parsed.map(a => ({
+                id: a.uid,
+                userId: a.uid,
+                name: a.displayName,
+                role: a.role,
+                salary: a.salary || 3000000,
+                hourlyRate: a.hourlyRate || 15000,
+                status: 'active',
+                joinedAt: new Date().toISOString()
+              }));
+            }
+          }
+        } catch (e) {}
+
+        const mergedEmps = [...data];
+        offlineEmps.forEach(oe => {
+          if (!mergedEmps.some(me => me.userId === oe.userId)) {
+            mergedEmps.push(oe);
+          }
+        });
+
+        setEmployees(mergedEmps);
+        setLocalItem('employees', mergedEmps);
         setLoadingStates(prev => ({ ...prev, employees: false }));
       },
       (error) => {
