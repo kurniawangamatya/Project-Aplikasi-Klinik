@@ -46,9 +46,10 @@ export default function OverviewDashboard({ setTab, boards, setCurrentBoardId }:
     const unsubSales = onSnapshot(salesQ, (snapshot) => {
       let filtered = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SaleTransaction));
       
-      // If not admin/owner/keuangan, filter in-memory to match user's role (dokter/perawat) role scope
-      if (!['admin', 'owner', 'keuangan'].includes(profile.role)) {
-        const filterField = profile.role === 'dokter' ? 'doctorId' : 'nurseId';
+      // Only clinic owner gets to see collective clinical financial overview.
+      // Other roles are strictly restricted to their own associated records so they cannot see other's revenue/earnings.
+      if (profile.role !== 'owner') {
+        const filterField = profile.role === 'dokter' ? 'doctorId' : (profile.role === 'perawat' ? 'nurseId' : 'createdBy');
         filtered = filtered.filter(s => (s as any)[filterField] === profile.uid);
       }
       
@@ -75,7 +76,12 @@ export default function OverviewDashboard({ setTab, boards, setCurrentBoardId }:
       }
     };
 
-    fetchExpenses();
+    if (profile.role !== 'owner') {
+      setExpenses([]);
+      setLoading(false);
+    } else {
+      fetchExpenses();
+    }
     return () => {
       unsubSales();
     };

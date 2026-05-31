@@ -136,17 +136,18 @@ export default function BoardView({ boardId }: { boardId: string }) {
     
     // Default fallbacks
     const defaults: Record<string, string[]> = {
-      owner: ['board', 'clinic-boards', 'clinic-task-validate', 'analytics', 'doctor-report', 'nurse-report', 'admin-report', 'team', 'finance', 'payroll', 'attendance', 'patient-data', 'settings'],
-      admin: ['board', 'clinic-boards', 'clinic-task-validate', 'analytics', 'doctor-report', 'nurse-report', 'admin-report', 'team', 'finance', 'payroll', 'attendance', 'patient-data', 'settings'],
-      keuangan: ['board', 'clinic-boards', 'finance', 'payroll', 'attendance', 'patient-data'],
-      dokter: ['board', 'clinic-boards', 'doctor-report', 'attendance', 'patient-data'],
-      perawat: ['board', 'clinic-boards', 'nurse-report', 'attendance', 'patient-data'],
-      apoteker: ['board', 'clinic-boards', 'clinic-task-validate', 'attendance', 'patient-data'],
-      media: ['board', 'clinic-boards', 'attendance'],
-      PIC: ['board', 'clinic-boards', 'team', 'clinic-task-validate', 'attendance', 'patient-data', 'settings']
+      owner: ['overview', 'board', 'clinic-boards', 'clinic-task-validate', 'analytics', 'doctor-report', 'nurse-report', 'admin-report', 'team', 'finance', 'payroll', 'attendance', 'patient-data', 'kpi', 'settings'],
+      admin: ['overview', 'board', 'clinic-boards', 'clinic-task-validate', 'admin-report', 'team', 'finance', 'payroll', 'attendance', 'patient-data', 'kpi', 'settings'],
+      keuangan: ['overview', 'board', 'clinic-boards', 'finance', 'payroll', 'attendance', 'patient-data', 'kpi'],
+      dokter: ['overview', 'board', 'clinic-boards', 'doctor-report', 'attendance', 'patient-data', 'kpi'],
+      perawat: ['overview', 'board', 'clinic-boards', 'nurse-report', 'attendance', 'patient-data', 'kpi'],
+      apoteker: ['overview', 'board', 'clinic-boards', 'clinic-task-validate', 'attendance', 'patient-data', 'kpi'],
+      media: ['overview', 'board', 'clinic-boards', 'attendance', 'kpi'],
+      PIC: ['overview', 'board', 'clinic-boards', 'team', 'clinic-task-validate', 'attendance', 'patient-data', 'kpi', 'settings']
     };
     
-    return profile?.role ? (defaults[profile.role] || ['board', 'clinic-boards']) : ['board', 'clinic-boards'];
+    const roleKey = profile?.role === 'PIC' ? 'PIC' : (profile?.role || '').toLowerCase();
+    return roleKey ? (defaults[roleKey] || ['board', 'clinic-boards']) : ['board', 'clinic-boards'];
   }, [rolePermissions, profile?.role]);
 
   const isAllowed = (navId: string) => allowedNavs.includes(navId);

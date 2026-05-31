@@ -1,16 +1,16 @@
 import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
-import { db, collection, query, onSnapshot, limit, orderBy, where, doc, handleFirestoreError, OperationType, setDoc } from '../lib/firebase';
+import { db, collection, query, onSnapshot, limit, orderBy, where, doc, handleFirestoreError, OperationType, setDoc, serverTimestamp } from '../lib/firebase';
 import { Product, UserProfile, Board } from '../types';
 import { useAuth } from '../hooks/useAuth';
 
 // High-Fidelity Default Fallback Seed Data
 const SEED_PRODUCTS: Product[] = [
-  { id: 'p1', name: 'Cabut Gigi Anak', shortName: 'CBT-A', price: 150000, stock: 999, category: 'Tindakan Gigi', color: '#10B981', type: 'service' },
-  { id: 'p2', name: 'Tambal Gigi Resin', shortName: 'TBL-R', price: 250000, stock: 999, category: 'Tindakan Gigi', color: '#3B82F6', type: 'service' },
-  { id: 'p3', name: 'Scalling Gigi (Pembersihan Karang)', shortName: 'SCL', price: 200000, stock: 999, category: 'Tindakan Gigi', color: '#8B5CF6', type: 'service' },
-  { id: 'p4', name: 'Odontoscopy / Rontgen Gigi', shortName: 'RTG', price: 300000, stock: 999, category: 'Penunjang', color: '#F59E0B', type: 'service' },
-  { id: 'p5', name: 'Paracetamol 500mg (1 Strip)', shortName: 'PCT', price: 15000, stock: 100, category: 'Obat-obatan', color: '#EF4444', type: 'product' },
-  { id: 'p6', name: 'Amoxicilin 500mg (1 Strip)', shortName: 'AMX', price: 25000, stock: 80, category: 'Obat-obatan', color: '#EF4444', type: 'product' }
+  { id: 'p1', name: 'Cabut Gigi Anak', shortName: 'CBT-A', price: 150000, stock: 999, category: 'Tindakan Gigi', color: '#10B981', type: 'service', sharingType: 'percentage', doctorCommission: 30, nurseCommission: 10, adminCommission: 5, ownerCommission: 10, financeCommission: 5 },
+  { id: 'p2', name: 'Tambal Gigi Resin', shortName: 'TBL-R', price: 250000, stock: 999, category: 'Tindakan Gigi', color: '#3B82F6', type: 'service', sharingType: 'percentage', doctorCommission: 30, nurseCommission: 10, adminCommission: 5, ownerCommission: 10, financeCommission: 5 },
+  { id: 'p3', name: 'Scalling Gigi (Pembersihan Karang)', shortName: 'SCL', price: 200000, stock: 999, category: 'Tindakan Gigi', color: '#8B5CF6', type: 'service', sharingType: 'percentage', doctorCommission: 30, nurseCommission: 10, adminCommission: 5, ownerCommission: 10, financeCommission: 5 },
+  { id: 'p4', name: 'Odontoscopy / Rontgen Gigi', shortName: 'RTG', price: 300000, stock: 999, category: 'Penunjang', color: '#F59E0B', type: 'service', sharingType: 'percentage', doctorCommission: 30, nurseCommission: 10, adminCommission: 5, ownerCommission: 10, financeCommission: 5 },
+  { id: 'p5', name: 'Paracetamol 500mg (1 Strip)', shortName: 'PCT', price: 15000, stock: 100, category: 'Obat-obatan', color: '#EF4444', type: 'product', sharingType: 'percentage', doctorCommission: 0, nurseCommission: 0, adminCommission: 0, ownerCommission: 0, financeCommission: 0 },
+  { id: 'p6', name: 'Amoxicilin 500mg (1 Strip)', shortName: 'AMX', price: 25000, stock: 80, category: 'Obat-obatan', color: '#EF4444', type: 'product', sharingType: 'percentage', doctorCommission: 0, nurseCommission: 0, adminCommission: 0, ownerCommission: 0, financeCommission: 0 }
 ];
 
 const SEED_CATEGORIES = [
@@ -103,11 +103,11 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [users, setUsers] = useState<UserProfile[]>(() => getLocalItem('users', SEED_USERS));
   const [doctors, setDoctors] = useState<UserProfile[]>(() => {
     const rawUsers = getLocalItem('users', SEED_USERS);
-    return rawUsers.filter(u => u.role === 'dokter');
+    return rawUsers.filter(u => u.role?.toLowerCase() === 'dokter');
   });
   const [nurses, setNurses] = useState<UserProfile[]>(() => {
     const rawUsers = getLocalItem('users', SEED_USERS);
-    return rawUsers.filter(u => u.role === 'perawat');
+    return rawUsers.filter(u => u.role?.toLowerCase() === 'perawat');
   });
   const [categories, setCategories] = useState<{ id: string; name: string }[]>(() => getLocalItem('categories', SEED_CATEGORIES));
   const [employees, setEmployees] = useState<any[]>(() => getLocalItem('employees', SEED_EMPLOYEES));
@@ -118,6 +118,49 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [boards, setBoards] = useState<Board[]>(() => getLocalItem('boards', SEED_BOARDS));
   const [isQuotaExceeded, setIsQuotaExceeded] = useState(false);
   const [customizationSettings, setCustomizationSettings] = useState<any>(() => getLocalItem('customizationSettings', DEFAULT_CUSTOMIZATION));
+
+  useEffect(() => {
+    if (!user) {
+      setDoctors([]);
+      setNurses([]);
+      return;
+    }
+
+    const resolvedDoctors: UserProfile[] = users.filter(u => u.role?.toLowerCase() === 'dokter');
+    const resolvedNurses: UserProfile[] = users.filter(u => u.role?.toLowerCase() === 'perawat');
+
+    // Merge from employees list as fallback (in case role is updated or user is created but not in users collection yet)
+    employees.forEach(emp => {
+      const roleLower = emp.role?.toLowerCase();
+      if (roleLower === 'dokter') {
+        const docId = emp.userId || emp.id;
+        if (docId && !resolvedDoctors.some(d => d.uid === docId)) {
+          resolvedDoctors.push({
+            uid: docId,
+            displayName: emp.name || emp.displayName || 'Dokter Tanpa Nama',
+            email: emp.email || '',
+            role: 'dokter',
+            specialization: emp.specialization || ''
+          });
+        }
+      } else if (roleLower === 'perawat') {
+        const nurseId = emp.userId || emp.id;
+        if (nurseId && !resolvedNurses.some(n => n.uid === nurseId)) {
+          resolvedNurses.push({
+            uid: nurseId,
+            displayName: emp.name || emp.displayName || 'Perawat Tanpa Nama',
+            email: emp.email || '',
+            role: 'perawat',
+            specialization: emp.specialization || ''
+          });
+        }
+      }
+    });
+
+    setDoctors(resolvedDoctors);
+    setNurses(resolvedNurses);
+  }, [users, employees, user]);
+
   const [loadingStates, setLoadingStates] = useState({
     products: true,
     users: true,
@@ -144,6 +187,22 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       setAllTodayAttendance([]);
       setBoards([]);
       return;
+    }
+
+    // Set temporary default permissions for the current role while waiting for the snapshot
+    if (profile?.role) {
+      const defaults: Record<string, string[]> = {
+        owner: ['overview', 'board', 'clinic-boards', 'clinic-task-validate', 'analytics', 'doctor-report', 'nurse-report', 'admin-report', 'team', 'finance', 'payroll', 'attendance', 'patient-data', 'kpi', 'settings'],
+        admin: ['overview', 'board', 'clinic-boards', 'clinic-task-validate', 'admin-report', 'team', 'finance', 'payroll', 'attendance', 'patient-data', 'kpi', 'settings'],
+        keuangan: ['overview', 'board', 'clinic-boards', 'finance', 'payroll', 'attendance', 'patient-data', 'kpi'],
+        dokter: ['overview', 'board', 'clinic-boards', 'doctor-report', 'attendance', 'patient-data', 'kpi'],
+        perawat: ['overview', 'board', 'clinic-boards', 'nurse-report', 'attendance', 'patient-data', 'kpi'],
+        apoteker: ['overview', 'board', 'clinic-boards', 'clinic-task-validate', 'attendance', 'patient-data', 'kpi'],
+        media: ['overview', 'board', 'clinic-boards', 'attendance', 'kpi'],
+        PIC: ['overview', 'board', 'clinic-boards', 'team', 'clinic-task-validate', 'attendance', 'patient-data', 'kpi', 'settings']
+      };
+      const defaultNav = defaults[profile.role] || ['board'];
+      setRolePermissions({ navigation: defaultNav });
     }
 
     // Event listener for Firebase Database Quota Exceeded
@@ -224,8 +283,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         });
 
         setUsers(mergedUsers);
-        setDoctors(mergedUsers.filter(u => u.role === 'dokter'));
-        setNurses(mergedUsers.filter(u => u.role === 'perawat'));
         setLocalItem('users', mergedUsers);
         setLoadingStates(prev => ({ ...prev, users: false }));
       },
@@ -330,13 +387,39 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     // 6. Role Permissions Listener
     let unsubPermissions = () => {};
     if (profile?.role) {
+      const roleKey = profile.role === 'PIC' ? 'PIC' : profile.role.toLowerCase();
       unsubPermissions = onSnapshot(
-        doc(db, 'role_permissions', profile.role),
-        (snap) => {
+        doc(db, 'role_permissions', roleKey),
+        async (snap) => {
+          const defaults: Record<string, string[]> = {
+            owner: ['overview', 'board', 'clinic-boards', 'clinic-task-validate', 'analytics', 'doctor-report', 'nurse-report', 'admin-report', 'team', 'finance', 'payroll', 'attendance', 'patient-data', 'kpi', 'settings'],
+            admin: ['overview', 'board', 'clinic-boards', 'clinic-task-validate', 'admin-report', 'team', 'finance', 'payroll', 'attendance', 'patient-data', 'kpi', 'settings'],
+            keuangan: ['overview', 'board', 'clinic-boards', 'finance', 'payroll', 'attendance', 'patient-data', 'kpi'],
+            dokter: ['overview', 'board', 'clinic-boards', 'doctor-report', 'attendance', 'patient-data', 'kpi'],
+            perawat: ['overview', 'board', 'clinic-boards', 'nurse-report', 'attendance', 'patient-data', 'kpi'],
+            apoteker: ['overview', 'board', 'clinic-boards', 'clinic-task-validate', 'attendance', 'patient-data', 'kpi'],
+            media: ['overview', 'board', 'clinic-boards', 'attendance', 'kpi'],
+            PIC: ['overview', 'board', 'clinic-boards', 'team', 'clinic-task-validate', 'attendance', 'patient-data', 'kpi', 'settings']
+          };
+          const defaultNav = defaults[roleKey] || ['board'];
+
           if (snap.exists()) {
             const data = snap.data();
             setRolePermissions(data);
             setLocalItem('rolePermissions', data);
+          } else {
+            // Apply fallback defaults if database doc does not exist
+            const fallbackData = { navigation: defaultNav };
+            setRolePermissions(fallbackData);
+            setLocalItem('rolePermissions', fallbackData);
+            try {
+              await setDoc(doc(db, 'role_permissions', roleKey), {
+                navigation: defaultNav,
+                updatedAt: serverTimestamp()
+              });
+            } catch (err) {
+              console.warn("Could not initialize default role permissions:", err);
+            }
           }
           setLoadingStates(prev => ({ ...prev, permissions: false }));
         },

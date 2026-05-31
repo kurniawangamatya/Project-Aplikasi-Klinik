@@ -74,16 +74,14 @@ export function checkAndLogQuotaError(error: any): boolean {
     code === 'resource-exhausted' ||
     code === 'permission-denied' ||
     code === 'unauthenticated' ||
-    code.includes('permission') ||
-    code.includes('operation-not-allowed') ||
     msg.includes('Quota limit exceeded') ||
     msg.includes('Quota exceeded') ||
     msg.toLowerCase().includes('quota') ||
     msg.toLowerCase().includes('exhausted') ||
-    msg.toLowerCase().includes('insufficient permissions') ||
-    msg.toLowerCase().includes('permission-denied') ||
     msg.toLowerCase().includes('permission') ||
-    (msg.toLowerCase().includes('limit') && !msg.toLowerCase().includes('permission'))
+    msg.toLowerCase().includes('denied') ||
+    msg.toLowerCase().includes('unauthenticated') ||
+    msg.toLowerCase().includes('limit')
   ) {
     if (typeof window !== 'undefined') {
       (window as any).__firebaseQuotaExceeded = true;
@@ -116,8 +114,7 @@ testConnection();
 export function isLocalSimulation(): boolean {
   if (typeof window !== 'undefined') {
     return (window as any).__firebaseQuotaExceeded === true || 
-           localStorage.getItem('force_local_simulation') === 'true' ||
-           localStorage.getItem('clinic_simulated_user') !== null;
+           localStorage.getItem('force_local_simulation') === 'true';
   }
   return false;
 }
@@ -168,6 +165,16 @@ function getPathFromRef(ref: any): string {
   return '';
 }
 
+function getColAndDocIdFromPath(path: string): { colPath: string; docId: string } {
+  const parts = path.split('/').filter(Boolean);
+  if (parts.length < 2) {
+    return { colPath: path, docId: '' };
+  }
+  const docId = parts[parts.length - 1];
+  const colPath = parts.slice(0, parts.length - 1).join('/');
+  return { colPath, docId };
+}
+
 function makeSimulatedTimestamp(val: any) {
   const dateObj = val ? new Date(val) : new Date();
   return {
@@ -180,6 +187,73 @@ function makeSimulatedTimestamp(val: any) {
 
 function getSimulatedCollection(path: string): any[] {
   if (typeof window === 'undefined') return [];
+
+  // Custom intercept to read/write/merge custom registered accounts on the fly
+  if (path === 'users' || path === 'employees') {
+    const normalized = path.replace(/\//g, "_");
+    const storageKey = `clinic_simdb_${normalized}`;
+    const existing = localStorage.getItem(storageKey);
+    let list: any[] = [];
+    try {
+      if (existing) {
+        list = JSON.parse(existing);
+      } else {
+        list = [...(path === 'users' ? SEED_DATA.users : SEED_DATA.employees)];
+      }
+    } catch {
+      list = [...(path === 'users' ? SEED_DATA.users : SEED_DATA.employees)];
+    }
+
+    // Merge from clinic_local_registered_accounts
+    try {
+      const saved = localStorage.getItem('clinic_local_registered_accounts');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          let dirty = false;
+          parsed.forEach(a => {
+            if (path === 'users') {
+              const exists = list.some((u: any) => u.email === a.email || u.uid === a.uid);
+              if (!exists) {
+                list.push({
+                  uid: a.uid,
+                  id: a.uid,
+                  email: a.email,
+                  displayName: a.displayName,
+                  role: a.role,
+                  specialization: a.specialization || ''
+                });
+                dirty = true;
+              }
+            } else if (path === 'employees') {
+              const exists = list.some((e: any) => e.userId === a.uid || e.id === a.uid);
+              if (!exists) {
+                list.push({
+                  id: a.uid,
+                  userId: a.uid,
+                  name: a.displayName,
+                  role: a.role,
+                  salary: a.salary || a.salary === 0 ? a.salary : 3000000,
+                  hourlyRate: a.hourlyRate || a.hourlyRate === 0 ? a.hourlyRate : 15000,
+                  status: 'active',
+                  joinedAt: new Date().toISOString()
+                });
+                dirty = true;
+              }
+            }
+          });
+          if (dirty) {
+            localStorage.setItem(storageKey, JSON.stringify(list));
+            window.dispatchEvent(new CustomEvent(`clinic-simdb-updated-${path}`));
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Local accounts merge failed:", e);
+    }
+    return list;
+  }
+
   const normalized = path.replace(/\//g, "_");
   const storageKey = `clinic_simdb_${normalized}`;
   const existing = localStorage.getItem(storageKey);
@@ -258,11 +332,11 @@ function getSimulatedCollection(path: string): any[] {
     { id: 'customization', loginVibe: 'minimal_slate', loginSubtitle: 'Operasional Keuangan Digital | AI Studio Secure Edition', primaryBrandColor: '#3B82F6', hideQuickLogin: false, showDeveloperCredit: true }
   ];
   else if (path === 'role_permissions') seed = [
-    { id: 'admin', navigation: ['overview', 'board', 'clinic-boards', 'clinic-task-validate', 'analytics', 'doctor-report', 'nurse-report', 'admin-report', 'team', 'finance', 'payroll', 'attendance', 'patient-data', 'kpi', 'settings'] },
+    { id: 'admin', navigation: ['overview', 'board', 'clinic-boards', 'clinic-task-validate', 'admin-report', 'team', 'finance', 'payroll', 'attendance', 'patient-data', 'kpi', 'settings'] },
     { id: 'owner', navigation: ['overview', 'board', 'clinic-boards', 'clinic-task-validate', 'analytics', 'doctor-report', 'nurse-report', 'admin-report', 'team', 'finance', 'payroll', 'attendance', 'patient-data', 'kpi', 'settings'] },
-    { id: 'keuangan', navigation: ['overview', 'board', 'clinic-boards', 'analytics', 'admin-report', 'finance', 'payroll', 'attendance', 'patient-data', 'settings'] },
+    { id: 'keuangan', navigation: ['overview', 'board', 'clinic-boards', 'finance', 'payroll', 'attendance', 'patient-data', 'kpi'] },
     { id: 'dokter', navigation: ['overview', 'board', 'clinic-boards', 'doctor-report', 'attendance', 'patient-data', 'kpi'] },
-    { id: 'perawat', navigation: ['overview', 'board', 'nurse-report', 'attendance', 'patient-data'] }
+    { id: 'perawat', navigation: ['overview', 'board', 'nurse-report', 'attendance', 'patient-data', 'kpi'] }
   ];
 
   localStorage.setItem(storageKey, JSON.stringify(seed));
@@ -275,6 +349,10 @@ function saveSimulatedCollection(path: string, docs: any[]) {
   const storageKey = `clinic_simdb_${normalized}`;
   localStorage.setItem(storageKey, JSON.stringify(docs));
   window.dispatchEvent(new CustomEvent(`clinic-simdb-updated-${path}`));
+  const rootCol = path.split('/')[0];
+  if (rootCol && rootCol !== path) {
+    window.dispatchEvent(new CustomEvent(`clinic-simdb-updated-${rootCol}`));
+  }
 }
 
 function sanitizeSimulatedData(data: any): any {
@@ -282,7 +360,7 @@ function sanitizeSimulatedData(data: any): any {
   const copy = { ...data };
   Object.keys(copy).forEach(key => {
     const val = copy[key];
-    const isDateKey = key === 'createdAt' || key === 'updatedAt' || key === 'date' || key === 'joinedAt' || key === 'clockIn' || key === 'clockOut';
+    const isDateKey = key === 'createdAt' || key === 'updatedAt' || key === 'joinedAt' || key === 'clockIn' || key === 'clockOut';
     if (isDateKey) {
       if (!val || (typeof val === 'object' && Object.keys(val).length === 0) || val?.constructor?.name?.includes('FieldValue') || typeof val.toDate === 'function') {
         copy[key] = new Date().toISOString();
@@ -303,7 +381,7 @@ function mockDocSnapshot(id: string, data: any) {
       const processed = { ...data };
       Object.keys(processed).forEach(key => {
         const val = processed[key];
-        if (key === 'createdAt' || key === 'date' || key === 'joinedAt' || key === 'clockIn' || key === 'clockOut') {
+        if (key === 'createdAt' || key === 'joinedAt' || key === 'clockIn' || key === 'clockOut') {
           if (val && typeof val === 'string' && !val.includes('toDate')) {
             processed[key] = makeSimulatedTimestamp(val);
           } else if (val && typeof val === 'object' && (val as any).toDate) {
@@ -382,12 +460,7 @@ export async function getDoc(reference: any) {
 }
 
 async function emulatedGetDoc(path: string) {
-  const parts = path.split('/');
-  if (parts.length < 2) {
-    return mockDocSnapshot(path, null);
-  }
-  const colPath = parts[0];
-  const docId = parts[1];
+  const { colPath, docId } = getColAndDocIdFromPath(path);
   const col = getSimulatedCollection(colPath);
   const found = col.find(d => (d.id === docId || d.uid === docId));
   return mockDocSnapshot(docId, found || null);
@@ -411,10 +484,7 @@ export async function setDoc(reference: any, data: any, options?: any) {
 }
 
 async function emulatedSetDoc(path: string, data: any, options?: any) {
-  const parts = path.split('/');
-  if (parts.length < 2) return;
-  const colPath = parts[0];
-  const docId = parts[1];
+  const { colPath, docId } = getColAndDocIdFromPath(path);
   const col = getSimulatedCollection(colPath);
   const index = col.findIndex(d => (d.id === docId || d.uid === docId));
   
@@ -474,10 +544,7 @@ export async function updateDoc(reference: any, ...args: any[]) {
 }
 
 async function emulatedUpdateDoc(path: string, data: any) {
-  const parts = path.split('/');
-  if (parts.length < 2) return;
-  const colPath = parts[0];
-  const docId = parts[1];
+  const { colPath, docId } = getColAndDocIdFromPath(path);
   const col = getSimulatedCollection(colPath);
   const index = col.findIndex(d => (d.id === docId || d.uid === docId));
   if (index !== -1) {
@@ -505,13 +572,49 @@ export async function deleteDoc(reference: any) {
 }
 
 async function emulatedDeleteDoc(path: string) {
-  const parts = path.split('/');
-  if (parts.length < 2) return;
-  const colPath = parts[0];
-  const docId = parts[1];
+  const { colPath, docId } = getColAndDocIdFromPath(path);
   let col = getSimulatedCollection(colPath);
-  col = col.filter(d => (d.id !== docId && d.uid !== docId));
+  col = col.filter(d => (d.id !== docId && d.uid !== docId && d.userId !== docId));
   saveSimulatedCollection(colPath, col);
+
+  // If deleting from users or employees, clean from registration storage and sync both
+  if (colPath === 'users' || colPath === 'employees') {
+    try {
+      const saved = localStorage.getItem('clinic_local_registered_accounts');
+      if (saved) {
+        let parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          const originalLen = parsed.length;
+          parsed = parsed.filter(a => a.uid !== docId && a.id !== docId);
+          if (parsed.length !== originalLen) {
+            localStorage.setItem('clinic_local_registered_accounts', JSON.stringify(parsed));
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Failed to clean deleted user from registered accounts:", e);
+    }
+
+    // Also delete from the companion collection to keep user/employee synced
+    try {
+      const companionPath = colPath === 'users' ? 'employees' : 'users';
+      const companionStorageKey = `clinic_simdb_${companionPath}`;
+      const companionExisting = localStorage.getItem(companionStorageKey);
+      if (companionExisting) {
+        let companionCol = JSON.parse(companionExisting);
+        if (Array.isArray(companionCol)) {
+          const companionOriginalLen = companionCol.length;
+          companionCol = companionCol.filter(d => d.id !== docId && d.uid !== docId && d.userId !== docId);
+          if (companionCol.length !== companionOriginalLen) {
+            localStorage.setItem(companionStorageKey, JSON.stringify(companionCol));
+            window.dispatchEvent(new CustomEvent(`clinic-simdb-updated-${companionPath}`));
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Failed to sync companion record delete:", e);
+    }
+  }
 }
 
 export async function getDocs(q: any) {
@@ -554,9 +657,7 @@ export function onSnapshot(reference: any, ...args: any[]) {
     const runSim = () => {
       const isDocument = path.split('/').filter(Boolean).length % 2 === 0;
       if (isDocument) {
-        const parts = path.split('/').filter(Boolean);
-        const colPath = parts[0];
-        const docId = parts[1];
+        const { colPath, docId } = getColAndDocIdFromPath(path);
         const col = getSimulatedCollection(colPath);
         const found = col.find(d => (d.id === docId || d.uid === docId));
         const snap = mockDocSnapshot(docId, found || null);
@@ -588,9 +689,7 @@ export function onSnapshot(reference: any, ...args: any[]) {
       const runSim = () => {
         const isDocument = path.split('/').filter(Boolean).length % 2 === 0;
         if (isDocument) {
-          const parts = path.split('/').filter(Boolean);
-          const colPath = parts[0];
-          const docId = parts[1];
+          const { colPath, docId } = getColAndDocIdFromPath(path);
           const col = getSimulatedCollection(colPath);
           const found = col.find(d => (d.id === docId || d.uid === docId));
           const snap = mockDocSnapshot(docId, found || null);
@@ -644,9 +743,7 @@ export function onSnapshot(reference: any, ...args: any[]) {
     const runSim = () => {
       const isDocument = path.split('/').filter(Boolean).length % 2 === 0;
       if (isDocument) {
-        const parts = path.split('/').filter(Boolean);
-        const colPath = parts[0];
-        const docId = parts[1];
+        const { colPath, docId } = getColAndDocIdFromPath(path);
         const col = getSimulatedCollection(colPath);
         const found = col.find(d => (d.id === docId || d.uid === docId));
         const snap = mockDocSnapshot(docId, found || null);

@@ -45,9 +45,15 @@ function DoctorCard({ doctor, allSales, employees, onViewMore }: DoctorCardProps
       sale.items.forEach(item => {
         let itemCommission = 0;
         const sharingType = item.sharingType || 'percentage';
-        const commissionVal = item.doctorCommission || 0;
+        const isService = item.type === 'service';
+        const commissionVal = item.doctorCommission !== undefined && item.doctorCommission !== null ? item.doctorCommission : (isService ? 30 : 0);
 
-        if (sharingType === 'percentage') {
+        let resolvedSharingType = sharingType;
+        if (commissionVal > 100) {
+          resolvedSharingType = 'fixed';
+        }
+
+        if (resolvedSharingType === 'percentage') {
           itemCommission = (item.price * item.quantity * commissionVal) / 100;
         } else {
           const multiplier = (commissionVal > 0 && commissionVal < 1000) ? 1000 : 1;
@@ -163,6 +169,18 @@ export default function DoctorReport() {
   const { products: allProducts, users, categories: procedureCategories, employees } = useData();
   const [viewMode, setViewMode] = useState<'grid' | 'detail' | 'master'>('grid');
   const [selectedDoctorId, setSelectedDoctorId] = useState<string>('');
+
+  // Enforce role-based viewing restrictions
+  useEffect(() => {
+    if (profile) {
+      if (profile.role === 'owner') {
+        setViewMode('grid');
+      } else {
+        setSelectedDoctorId(profile.uid);
+        setViewMode('detail');
+      }
+    }
+  }, [profile]);
   const [allSales, setAllSales] = useState<SaleTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<Date>(new Date());
@@ -384,24 +402,30 @@ export default function DoctorReport() {
   const confirmDeleteCategory = async () => {
     if (!deletingCategoryName) return;
     try {
+      // Find a safe fallback category from the remaining master categories
+      const remainingCats = procedureCategories.filter(cat => cat.name !== deletingCategoryName);
+      const targetFallbackCatName = remainingCats.find(cat => cat.name === 'Umum' || cat.name === 'Jasa Medis')?.name 
+        || remainingCats[0]?.name 
+        || 'Umum';
+
       // 1. Delete matching from master categories
       const masterCat = procedureCategories.find(cat => cat.name === deletingCategoryName);
       if (masterCat) {
         await deleteDoc(doc(db, 'categories', masterCat.id));
       }
 
-      // 2. Move products to 'Jasa Medis'
+      // 2. Move products to target fallback category
       const productsToUpdate = allProducts.filter(p => p.category === deletingCategoryName);
       for (const p of productsToUpdate) {
-        await updateDoc(doc(db, 'products', p.id), { category: 'Jasa Medis' });
+        await updateDoc(doc(db, 'products', p.id), { category: targetFallbackCatName });
       }
 
-      // 3. Move sales items to 'Jasa Medis'
+      // 3. Move sales items to target fallback category
       const salesToUpdate = allSales.filter(s => s.items.some(item => (item.category || 'Lainnya') === deletingCategoryName));
       for (const s of salesToUpdate) {
         const updatedItems = s.items.map(item => {
           if ((item.category || 'Lainnya') === deletingCategoryName) {
-            return { ...item, category: 'Jasa Medis' };
+            return { ...item, category: targetFallbackCatName };
           }
           return item;
         });
@@ -433,8 +457,8 @@ export default function DoctorReport() {
     const unsubSales = onSnapshot(salesQ, (snapshot) => {
       let filtered = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SaleTransaction));
       
-      // If not admin/owner/keuangan, filter only own doctor sales programmatically in memory
-      if (!(profile.role === 'admin' || profile.role === 'owner' || profile.role === 'keuangan')) {
+      // Only owner can see everyone's metrics. Others are limited to their own.
+      if (profile.role !== 'owner') {
         filtered = filtered.filter(s => s.doctorId === profile.uid);
       }
       
@@ -470,12 +494,16 @@ export default function DoctorReport() {
 
   // Specific doctor sales for detail view
   const sales = useMemo(() => {
+    if (profile?.role !== 'owner' && selectedDoctorId !== profile?.uid) {
+      return [];
+    }
     return allSales.filter(s => s.doctorId === selectedDoctorId);
-  }, [allSales, selectedDoctorId]);
+  }, [allSales, selectedDoctorId, profile]);
 
   // Calculations for detail view
   const stats = useMemo(() => {
     if (!selectedDoctorId || viewMode !== 'detail') return null;
+    if (profile?.role !== 'owner' && selectedDoctorId !== profile?.uid) return null;
 
     const doctorUser = doctors.find(d => d.uid === selectedDoctorId);
     const employee = employees.find(e => e.userId === selectedDoctorId);
@@ -520,9 +548,15 @@ export default function DoctorReport() {
       sale.items.forEach(item => {
         let itemCommission = 0;
         const sharingType = item.sharingType || 'percentage';
-        const commissionVal = item.doctorCommission || 0;
+        const isService = item.type === 'service';
+        const commissionVal = item.doctorCommission !== undefined && item.doctorCommission !== null ? item.doctorCommission : (isService ? 30 : 0);
 
-        if (sharingType === 'percentage') {
+        let resolvedSharingType = sharingType;
+        if (commissionVal > 100) {
+          resolvedSharingType = 'fixed';
+        }
+
+        if (resolvedSharingType === 'percentage') {
           itemCommission = (item.price * item.quantity * commissionVal) / 100;
         } else {
           const multiplier = (commissionVal > 0 && commissionVal < 1000) ? 1000 : 1;
@@ -678,14 +712,16 @@ export default function DoctorReport() {
           </div>
 
             <div className="flex flex-wrap items-center gap-4 relative z-10 text-slate-600">
-              <button 
-                onClick={handleAddNewProcedure}
-                className="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-cyan-900/20 flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" /> Tambah Tindakan Baru
-              </button>
+              {profile?.role === 'owner' && (
+                <button 
+                  onClick={handleAddNewProcedure}
+                  className="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-cyan-900/20 flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" /> Tambah Tindakan Baru
+                </button>
+              )}
 
-            {viewMode !== 'grid' && (
+            {viewMode !== 'grid' && profile?.role === 'owner' && (
               <button 
                 onClick={() => setViewMode('grid')}
                 className="bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all border border-slate-200"
@@ -694,7 +730,7 @@ export default function DoctorReport() {
               </button>
             )}
 
-            {viewMode === 'grid' && (
+            {viewMode === 'grid' && profile?.role === 'owner' && (
               <button 
                 onClick={() => setViewMode('master')}
                 className="bg-white hover:bg-slate-50 text-slate-600 px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all border border-slate-200 flex items-center gap-2"
@@ -1783,47 +1819,53 @@ export default function DoctorReport() {
             </motion.div>
           )}
 
-          {deletingCategoryName && (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 pointer-events-auto"
-            >
+          {deletingCategoryName && (() => {
+            const remainingCats = procedureCategories.filter(cat => cat.name !== deletingCategoryName);
+            const computedFallbackCatName = remainingCats.find(cat => cat.name === 'Umum' || cat.name === 'Jasa Medis')?.name 
+              || remainingCats[0]?.name 
+              || 'Umum';
+            return (
               <motion.div 
-                initial={{ scale: 0.95, y: 15 }}
-                animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.95, y: 15 }}
-                className="bg-white rounded-[2rem] shadow-2xl border border-slate-100 max-w-sm w-full overflow-hidden"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 pointer-events-auto"
               >
-                <div className="p-6 sm:p-8 text-center space-y-4">
-                  <div className="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto shadow-sm">
-                    <Trash2 className="w-6 h-6" />
+                <motion.div 
+                  initial={{ scale: 0.95, y: 15 }}
+                  animate={{ scale: 1, y: 0 }}
+                  exit={{ scale: 0.95, y: 15 }}
+                  className="bg-white rounded-[2rem] shadow-2xl border border-slate-100 max-w-sm w-full overflow-hidden"
+                >
+                  <div className="p-6 sm:p-8 text-center space-y-4">
+                    <div className="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto shadow-sm">
+                      <Trash2 className="w-6 h-6" />
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="text-base font-black text-slate-800 uppercase tracking-tight">Hapus Kategori?</h3>
+                      <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                        Apakah Anda yakin ingin menghapus kategori "{deletingCategoryName}"? Tindakan ini akan memindahkan semua produk dan item transaksi yang menggunakan kategori ini ke kategori "{computedFallbackCatName}".
+                      </p>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <h3 className="text-base font-black text-slate-800 uppercase tracking-tight">Hapus Kategori?</h3>
-                    <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                      Apakah Anda yakin ingin menghapus kategori "{deletingCategoryName}"? Tindakan ini akan memindahkan semua produk dan item transaksi yang menggunakan kategori ini ke kategori "Jasa Medis".
-                    </p>
+                  <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-center gap-3">
+                    <button 
+                      onClick={() => setDeletingCategoryName(null)}
+                      className="flex-1 py-2.5 text-[10px] font-black uppercase text-slate-400 hover:text-slate-600 tracking-widest transition-colors text-center"
+                    >
+                      Batal
+                    </button>
+                    <button 
+                      onClick={confirmDeleteCategory}
+                      className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white text-[10px] font-black uppercase tracking-wider rounded-xl shadow-lg shadow-red-600/10 transition-colors text-center"
+                    >
+                      Hapus
+                    </button>
                   </div>
-                </div>
-                <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-center gap-3">
-                  <button 
-                    onClick={() => setDeletingCategoryName(null)}
-                    className="flex-1 py-2.5 text-[10px] font-black uppercase text-slate-400 hover:text-slate-600 tracking-widest transition-colors text-center"
-                  >
-                    Batal
-                  </button>
-                  <button 
-                    onClick={confirmDeleteCategory}
-                    className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white text-[10px] font-black uppercase tracking-wider rounded-xl shadow-lg shadow-red-600/10 transition-colors text-center"
-                  >
-                    Hapus
-                  </button>
-                </div>
+                </motion.div>
               </motion.div>
-            </motion.div>
-          )}
+            );
+          })()}
 
           {deletingProductId && (
             <motion.div 

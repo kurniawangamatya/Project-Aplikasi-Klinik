@@ -13,7 +13,7 @@ import {
   TrendingUp, DollarSign, BarChart3, 
   Calendar, ArrowUpRight, ArrowDownRight, Activity, Award, User,
   Stethoscope, Briefcase, ChevronDown, Check, Printer, Download, Share2, ArrowUpDown,
-  Trash2, Edit3, Heart, X
+  Trash2, Edit3, Heart, X, Search
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
@@ -42,7 +42,11 @@ interface MemberCardProps {
 function MemberCard({ member, role, allSales, employees, onViewMore }: MemberCardProps) {
   const stats = useMemo(() => {
     const idField = role === 'dokter' ? 'doctorId' : role === 'perawat' ? 'nurseId' : 'createdBy';
-    const commField = role === 'dokter' ? 'doctorCommission' : role === 'perawat' ? 'nurseCommission' : 'adminCommission';
+    const commField = role === 'dokter' ? 'doctorCommission' : 
+                      role === 'perawat' ? 'nurseCommission' : 
+                      role === 'keuangan' ? 'financeCommission' :
+                      role === 'owner' ? 'ownerCommission' :
+                      'adminCommission';
     
     const memberSales = allSales.filter(s => s[idField] === member.uid);
     const employee = employees.find(e => e.userId === member.uid);
@@ -54,9 +58,22 @@ function MemberCard({ member, role, allSales, employees, onViewMore }: MemberCar
       sale.items.forEach(item => {
         let itemCommission = 0;
         const sharingType = item.sharingType || 'percentage';
-        const commissionVal = (item as any)[commField] || 0;
+        const isService = item.type === 'service';
+        const defaultComm = isService ? (
+          commField === 'doctorCommission' ? 30 : 
+          commField === 'nurseCommission' ? 10 : 
+          commField === 'financeCommission' ? 5 :
+          commField === 'ownerCommission' ? 10 :
+          commField === 'adminCommission' ? 5 : 0
+        ) : 0;
+        const commissionVal = (item as any)[commField] !== undefined && (item as any)[commField] !== null ? (item as any)[commField] : defaultComm;
 
-        if (sharingType === 'percentage') {
+        let resolvedSharingType = sharingType;
+        if (commissionVal > 100) {
+          resolvedSharingType = 'fixed';
+        }
+
+        if (resolvedSharingType === 'percentage') {
           itemCommission = (item.price * item.quantity * commissionVal) / 100;
         } else {
           const multiplier = (commissionVal > 0 && commissionVal < 1000) ? 1000 : 1;
@@ -81,28 +98,42 @@ function MemberCard({ member, role, allSales, employees, onViewMore }: MemberCar
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -5 }}
-      className="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-sm overflow-hidden group hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-500"
+      className={cn(
+        "bg-white rounded-[2.5rem] border border-slate-200/60 shadow-sm overflow-hidden group hover:shadow-xl transition-all duration-500",
+        role === 'perawat' ? "hover:shadow-blue-900/5" : "hover:shadow-violet-900/5"
+      )}
     >
       <div className="p-8 space-y-6">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
             <div className="relative">
-              <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-slate-100 group-hover:border-blue-500/20 transition-colors bg-slate-50 flex items-center justify-center text-slate-300">
+              <div className={cn(
+                "w-16 h-16 rounded-2xl overflow-hidden border-2 border-slate-100 transition-colors bg-slate-50 flex items-center justify-center text-slate-300",
+                role === 'perawat' ? "group-hover:border-blue-500/20" : "group-hover:border-violet-500/20"
+              )}>
                 {member.photoURL ? (
                   <img src={member.photoURL} alt={member.displayName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                 ) : (
                   <User className="w-8 h-8" />
                 )}
               </div>
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-600 rounded-lg flex items-center justify-center border-2 border-white text-white">
+              <div className={cn(
+                "absolute -bottom-1 -right-1 w-6 h-6 rounded-lg flex items-center justify-center border-2 border-white text-white",
+                role === 'perawat' ? "bg-blue-600" : "bg-violet-600"
+              )}>
                 <Check className="w-3 h-3" />
               </div>
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="text-lg font-black text-slate-900 tracking-tight leading-none mb-1.5 truncate">{member.displayName}</h3>
               <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[8px] font-black uppercase tracking-widest rounded-md border border-blue-100">
-                  {member.role || 'Staf Klinik'}
+                <span className={cn(
+                  "px-2 py-0.5 text-[8px] font-black uppercase tracking-widest rounded-md border",
+                  role === 'perawat' 
+                    ? "bg-blue-50 text-blue-600 border-blue-100" 
+                    : "bg-violet-50 text-violet-600 border-violet-100"
+                )}>
+                  {member.specialization || (role === 'perawat' ? 'Suster / Perawat' : 'Staf Administrasi')}
                 </span>
               </div>
             </div>
@@ -110,13 +141,47 @@ function MemberCard({ member, role, allSales, employees, onViewMore }: MemberCar
           <motion.button 
             whileTap={{ scale: 0.95 }}
             onClick={() => onViewMore(member.uid)}
-            className="p-3 bg-slate-50 hover:bg-blue-600 text-slate-400 hover:text-white rounded-2xl transition-all shadow-sm border border-slate-100 group/btn shrink-0"
+            className={cn(
+              "p-3 bg-slate-50 text-slate-400 hover:text-white rounded-2xl transition-all shadow-sm border border-slate-100 group/btn shrink-0",
+              role === 'perawat' ? "hover:bg-blue-600" : "hover:bg-violet-600"
+            )}
           >
             <ArrowUpRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5" />
           </motion.button>
         </div>
 
         <div className="grid grid-cols-1 gap-3">
+          <div className={cn(
+            "p-5 rounded-[2rem] text-white shadow-lg relative overflow-hidden group/earning",
+            role === 'perawat' ? "bg-blue-600 shadow-blue-900/20" : "bg-violet-600 shadow-violet-900/20"
+          )}>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full translate-x-12 -translate-y-12 blur-2xl group-hover/earning:scale-110 transition-transform duration-700" />
+            <div className="relative z-10">
+              <p className={cn(
+                "text-[10px] font-black uppercase tracking-[0.2em] mb-2 drop-shadow-sm",
+                role === 'perawat' ? "text-blue-100" : "text-violet-100"
+              )}>Total Estimasi Pendapatan</p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-black font-mono">Rp {(stats.totalWage || 0).toLocaleString()}</span>
+                <span className={cn(
+                  "text-[10px] font-bold opacity-60",
+                  role === 'perawat' ? "text-blue-100" : "text-violet-100"
+                )}>/ Bulan</span>
+              </div>
+              <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between text-[8px] font-black uppercase tracking-widest text-white opacity-90">
+                <div className="flex flex-col gap-0.5">
+                  <span className="opacity-60">Gaji Pokok</span>
+                  <span>Rp {(stats.baseSalary || 0).toLocaleString()}</span>
+                </div>
+                <div className="w-px h-6 bg-white/10" />
+                <div className="flex flex-col gap-0.5 text-right">
+                  <span className="opacity-60">Komisi Jasa</span>
+                  <span>Rp {(stats.jasa || 0).toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="flex items-center justify-between p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
             <div>
               <p className="text-[8px] font-black uppercase text-slate-400 tracking-widest mb-1">Pendapatan (Omset)</p>
@@ -125,26 +190,35 @@ function MemberCard({ member, role, allSales, employees, onViewMore }: MemberCar
             <TrendingUp className="w-4 h-4 text-emerald-500" />
           </div>
           
-          <div className="flex items-center justify-between p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
+          <div className={cn(
+            "flex items-center justify-between p-4 rounded-2xl border",
+            role === 'perawat' 
+              ? "bg-blue-50/30 border-blue-100" 
+              : "bg-violet-50/30 border-violet-100"
+          )}>
             <div>
-              <p className="text-[8px] font-black uppercase text-slate-400 tracking-widest mb-1">Pengeluaran (Upah)</p>
-              <p className="text-sm font-black text-slate-900 font-mono">Rp {(stats.totalWage || 0).toLocaleString()}</p>
+              <p className={cn(
+                "text-[8px] font-black uppercase tracking-widest mb-1",
+                role === 'perawat' ? "text-blue-600" : "text-violet-600"
+              )}>Margin Klinik</p>
+              <p className={cn(
+                "text-sm font-black font-mono",
+                role === 'perawat' ? "text-blue-700" : "text-violet-700"
+              )}>Rp {(stats.labaKlinik || 0).toLocaleString()}</p>
             </div>
-            <ArrowDownRight className="w-4 h-4 text-orange-500" />
-          </div>
-
-          <div className="flex items-center justify-between p-4 bg-blue-50/30 rounded-2xl border border-blue-100">
-            <div>
-              <p className="text-[8px] font-black uppercase text-blue-600 tracking-widest mb-1">Margin Klinik</p>
-              <p className="text-sm font-black text-blue-700 font-mono">Rp {(stats.labaKlinik || 0).toLocaleString()}</p>
-            </div>
-            <Activity className="w-4 h-4 text-blue-600" />
+            <Activity className={cn(
+              "w-4 h-4",
+              role === 'perawat' ? "text-blue-600" : "text-violet-600"
+            )} />
           </div>
         </div>
 
         <button 
           onClick={() => onViewMore(member.uid)}
-          className="w-full py-4 bg-slate-900 hover:bg-blue-600 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-lg shadow-slate-900/10 hover:shadow-blue-900/20 transition-all active:scale-[0.98]"
+          className={cn(
+            "w-full py-4 bg-slate-900 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-lg shadow-slate-900/10 transition-all active:scale-[0.98]",
+            role === 'perawat' ? "hover:bg-blue-600 hover:shadow-blue-900/20" : "hover:bg-violet-600 hover:shadow-violet-900/20"
+          )}
         >
           Lihat Laporan Khusus
         </button>
@@ -158,6 +232,18 @@ export default function MemberReport({ role, title }: MemberReportProps) {
   const { users, employees, products: allProducts, categories: procedureCategories } = useData();
   const [viewMode, setViewMode] = useState<'grid' | 'detail'>('grid');
   const [selectedMemberId, setSelectedMemberId] = useState<string>('');
+
+  // Enforce role-based viewing boundaries
+  useEffect(() => {
+    if (profile) {
+      if (profile.role === 'owner') {
+        setViewMode('grid');
+      } else {
+        setSelectedMemberId(profile.uid);
+        setViewMode('detail');
+      }
+    }
+  }, [profile]);
   const [allSales, setAllSales] = useState<SaleTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<Date>(new Date());
@@ -167,12 +253,21 @@ export default function MemberReport({ role, title }: MemberReportProps) {
   const [deletingSaleId, setDeletingSaleId] = useState<string | null>(null);
   const [editingCategory, setEditingCategory] = useState<{ originalName: string, currentName: string } | null>(null);
   const [deletingCategoryName, setDeletingCategoryName] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const idField = role === 'dokter' ? 'doctorId' : role === 'perawat' ? 'nurseId' : 'createdBy';
-  const commField = role === 'dokter' ? 'doctorCommission' : role === 'perawat' ? 'nurseCommission' : 'adminCommission';
+  const commField = role === 'dokter' ? 'doctorCommission' : 
+                    role === 'perawat' ? 'nurseCommission' : 
+                    role === 'keuangan' ? 'financeCommission' :
+                    role === 'owner' ? 'ownerCommission' :
+                    'adminCommission';
 
   // Derived from DataContext
   const members = useMemo(() => users.filter(u => u.role === role), [users, role]);
+
+  const filteredMembers = useMemo(() => {
+    return members.filter(m => (m.displayName || '').toLowerCase().includes(searchTerm.toLowerCase()));
+  }, [members, searchTerm]);
 
   const handleExportTreatmentsCSV = () => {
     if (!stats || !stats.treatments) return;
@@ -272,24 +367,30 @@ export default function MemberReport({ role, title }: MemberReportProps) {
   const confirmDeleteCategory = async () => {
     if (!deletingCategoryName) return;
     try {
+      // Find a safe fallback category from the remaining master categories
+      const remainingCats = procedureCategories.filter(cat => cat.name !== deletingCategoryName);
+      const targetFallbackCatName = remainingCats.find(cat => cat.name === 'Umum' || cat.name === 'Jasa Medis')?.name 
+        || remainingCats[0]?.name 
+        || 'Umum';
+
       // 1. Delete matching from master categories
       const masterCat = procedureCategories.find(cat => cat.name === deletingCategoryName);
       if (masterCat) {
         await deleteDoc(doc(db, 'categories', masterCat.id));
       }
 
-      // 2. Move products to 'Jasa Medis'
+      // 2. Move products to target fallback category
       const productsToUpdate = allProducts.filter(p => p.category === deletingCategoryName);
       for (const p of productsToUpdate) {
-        await updateDoc(doc(db, 'products', p.id), { category: 'Jasa Medis' });
+        await updateDoc(doc(db, 'products', p.id), { category: targetFallbackCatName });
       }
 
-      // 3. Move sales items to 'Jasa Medis'
+      // 3. Move sales items to target fallback category
       const salesToUpdate = allSales.filter(s => s.items.some(item => (item.category || 'Lainnya') === deletingCategoryName));
       for (const s of salesToUpdate) {
         const updatedItems = s.items.map(item => {
           if ((item.category || 'Lainnya') === deletingCategoryName) {
-            return { ...item, category: 'Jasa Medis' };
+            return { ...item, category: targetFallbackCatName };
           }
           return item;
         });
@@ -321,8 +422,8 @@ export default function MemberReport({ role, title }: MemberReportProps) {
     const unsubSales = onSnapshot(salesQ, (snapshot) => {
       let filtered = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SaleTransaction));
       
-      // If not admin/owner/keuangan, filter programmatically by idField in memory
-      if (!(profile.role === 'admin' || profile.role === 'owner' || profile.role === 'keuangan')) {
+      // Only owner can see everyone's metrics. Others can only see their own records.
+      if (profile.role !== 'owner') {
         filtered = filtered.filter(s => (s as any)[idField] === profile.uid);
       }
       
@@ -354,11 +455,15 @@ export default function MemberReport({ role, title }: MemberReportProps) {
   }, [selectedMemberId, period, viewMode]);
 
   const sales = useMemo(() => {
+    if (profile?.role !== 'owner' && selectedMemberId !== profile?.uid) {
+      return [];
+    }
     return allSales.filter(s => (s as any)[idField] === selectedMemberId);
-  }, [allSales, selectedMemberId, idField]);
+  }, [allSales, selectedMemberId, idField, profile]);
 
   const stats = useMemo(() => {
     if (!selectedMemberId || viewMode !== 'detail') return null;
+    if (profile?.role !== 'owner' && selectedMemberId !== profile?.uid) return null;
 
     const memberUser = members.find(d => d.uid === selectedMemberId);
     const employee = employees.find(e => e.userId === selectedMemberId);
@@ -401,9 +506,22 @@ export default function MemberReport({ role, title }: MemberReportProps) {
       sale.items.forEach(item => {
         let itemCommission = 0;
         const sharingType = item.sharingType || 'percentage';
-        const commissionVal = (item as any)[commField] || 0;
+        const isService = item.type === 'service';
+        const defaultComm = isService ? (
+          commField === 'doctorCommission' ? 30 : 
+          commField === 'nurseCommission' ? 10 : 
+          commField === 'financeCommission' ? 5 :
+          commField === 'ownerCommission' ? 10 :
+          commField === 'adminCommission' ? 5 : 0
+        ) : 0;
+        const commissionVal = (item as any)[commField] !== undefined && (item as any)[commField] !== null ? (item as any)[commField] : defaultComm;
 
-        if (sharingType === 'percentage') {
+        let resolvedSharingType = sharingType;
+        if (commissionVal > 100) {
+          resolvedSharingType = 'fixed';
+        }
+
+        if (resolvedSharingType === 'percentage') {
           itemCommission = (item.price * item.quantity * commissionVal) / 100;
         } else {
           const multiplier = (commissionVal > 0 && commissionVal < 1000) ? 1000 : 1;
@@ -482,11 +600,18 @@ export default function MemberReport({ role, title }: MemberReportProps) {
   return (
     <div className="flex-1 overflow-y-auto bg-[#f8fafc] p-4 sm:p-8 custom-scrollbar font-sans h-full">
       <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header Section */}
+        {/* Header Section with dynamic styling based on role */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-8 rounded-[2rem] border border-slate-200/60 shadow-sm relative overflow-hidden">
+          <div className={cn(
+            "absolute top-0 right-0 w-64 h-64 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl",
+            role === 'perawat' ? "bg-blue-50/50" : "bg-violet-50/50"
+          )} />
           <div className="relative z-10">
             <div className="flex items-center gap-4 mb-2">
-              <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-900/20">
+              <div className={cn(
+                "w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg",
+                role === 'perawat' ? "bg-blue-600 shadow-blue-900/20" : "bg-violet-600 shadow-violet-900/20"
+              )}>
                 {role === 'dokter' ? <Stethoscope className="w-6 h-6" /> : role === 'perawat' ? <Heart className="w-6 h-6" /> : <Briefcase className="w-6 h-6" />}
               </div>
               <div>
@@ -499,7 +624,7 @@ export default function MemberReport({ role, title }: MemberReportProps) {
           </div>
 
           <div className="flex flex-wrap items-center gap-4 relative z-10">
-            {viewMode === 'detail' && (
+            {viewMode === 'detail' && profile?.role === 'owner' && (
               <button 
                 onClick={() => setViewMode('grid')}
                 className="bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all border border-slate-200"
@@ -519,7 +644,10 @@ export default function MemberReport({ role, title }: MemberReportProps) {
                     newDate.setMonth(Number(e.target.value));
                     setPeriod(newDate);
                   }}
-                  className="bg-slate-50 border border-slate-100 rounded-2xl py-3 pl-12 pr-10 text-xs font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 appearance-none cursor-pointer"
+                  className={cn(
+                    "bg-slate-50 border border-slate-100 rounded-2xl py-3 pl-12 pr-10 text-xs font-black text-slate-900 focus:outline-none focus:ring-2 appearance-none cursor-pointer",
+                    role === 'perawat' ? "focus:ring-blue-600" : "focus:ring-violet-600"
+                  )}
                 >
                   {months.map((m, i) => <option key={m} value={i}>{m} {period.getFullYear()}</option>)}
                 </select>
@@ -531,7 +659,10 @@ export default function MemberReport({ role, title }: MemberReportProps) {
               <div className="flex gap-2 self-end pb-1">
                  <button 
                   onClick={handleExportTreatmentsCSV}
-                  className="p-3 bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-blue-600 rounded-2xl transition-all border border-slate-100 shadow-sm"
+                  className={cn(
+                    "p-3 bg-slate-50 hover:bg-slate-100 text-slate-400 rounded-2xl transition-all border border-slate-100 shadow-sm",
+                    role === 'perawat' ? "hover:text-blue-600" : "hover:text-violet-600"
+                  )}
                   title="Export Data Tindakan ke CSV"
                  >
                   <Download className="w-4 h-4" />
@@ -544,28 +675,52 @@ export default function MemberReport({ role, title }: MemberReportProps) {
         </div>
 
         {viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-10">
-            {members.map(member => (
-              <MemberCard 
-                key={member.uid} 
-                member={member}
-                role={role}
-                allSales={allSales} 
-                employees={employees}
-                onViewMore={(id) => {
-                  setSelectedMemberId(id);
-                  setViewMode('detail');
-                }}
-              />
-            ))}
-            {members.length === 0 && (
-              <div className="col-span-full py-20 text-center">
-                <div className="w-16 h-16 bg-slate-100 rounded-3xl flex items-center justify-center mx-auto mb-4 text-slate-300">
-                  <User className="w-8 h-8" />
-                </div>
-                <h3 className="text-lg font-black text-slate-400 uppercase tracking-widest">Belum ada staf terdaftar</h3>
+          <div className="space-y-8">
+            {/* Search Bar matching DoctorReport style */}
+            <div className="max-w-md">
+              <div className="relative group">
+                <Search className={cn(
+                  "absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 transition-colors",
+                  role === 'perawat' ? "group-focus-within:text-blue-600" : "group-focus-within:text-violet-600"
+                )} />
+                <input 
+                  type="text"
+                  placeholder={role === 'perawat' ? "Cari nama perawat..." : "Cari nama admin..."}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className={cn(
+                    "w-full bg-white border border-slate-200/60 rounded-2xl py-3.5 pl-12 pr-4 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 transition-all shadow-sm",
+                    role === 'perawat' ? "focus:ring-blue-600 focus:border-transparent" : "focus:ring-violet-600 focus:border-transparent"
+                  )}
+                />
               </div>
-            )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-10">
+              {filteredMembers.map(member => (
+                <MemberCard 
+                  key={member.uid} 
+                  member={member}
+                  role={role}
+                  allSales={allSales} 
+                  employees={employees}
+                  onViewMore={(id) => {
+                    setSelectedMemberId(id);
+                    setViewMode('detail');
+                  }}
+                />
+              ))}
+              {filteredMembers.length === 0 && (
+                <div className="col-span-full py-20 text-center">
+                  <div className="w-16 h-16 bg-slate-100 rounded-3xl flex items-center justify-center mx-auto mb-4 text-slate-300">
+                    <User className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-lg font-black text-slate-400 uppercase tracking-widest">
+                    {searchTerm ? 'Staf tidak ditemukan' : 'Belum ada staf terdaftar'}
+                  </h3>
+                </div>
+              )}
+            </div>
           </div>
         ) : stats ? (
           <>
@@ -575,7 +730,7 @@ export default function MemberReport({ role, title }: MemberReportProps) {
                 title="Total Gaji & Komisi" 
                 value={stats.totalWage} 
                 icon={<DollarSign className="w-5 h-5 text-white" />}
-                color="bg-blue-600"
+                color={role === 'perawat' ? 'bg-blue-600' : 'bg-violet-600'}
               />
               <StatCard 
                 title="Kontribusi Omset" 
@@ -587,9 +742,9 @@ export default function MemberReport({ role, title }: MemberReportProps) {
               <StatCard 
                 title="Total Komisi" 
                 value={stats.jasa} 
-                icon={<Award className="w-5 h-5 text-purple-600" />}
-                color="bg-purple-50"
-                textColor="text-purple-700"
+                icon={<Award className={cn("w-5 h-5", role === 'perawat' ? "text-blue-600" : "text-violet-600")} />}
+                color={role === 'perawat' ? "bg-blue-50" : "bg-violet-50"}
+                textColor={role === 'perawat' ? "text-blue-700" : "text-violet-700"}
               />
               <StatCard 
                 title="Gaji Pokok / UD" 
@@ -605,7 +760,7 @@ export default function MemberReport({ role, title }: MemberReportProps) {
               <div className="lg:col-span-2 bg-white p-8 rounded-[2.5rem] border border-slate-200/60 shadow-sm space-y-6">
                 <div className="flex items-center justify-between">
                   <h3 className="font-black text-slate-800 tracking-tight">Tren Komisi Harian</h3>
-                  <Activity className="w-5 h-5 text-blue-600" />
+                  <Activity className={cn("w-5 h-5", role === 'perawat' ? "text-blue-600" : "text-violet-600")} />
                 </div>
                 <div className="h-64 w-full">
                   <ResponsiveContainer width="100%" height="100%">
@@ -614,7 +769,7 @@ export default function MemberReport({ role, title }: MemberReportProps) {
                       <XAxis dataKey="name" stroke="#94a3b8" fontSize={9} tickLine={false} axisLine={false} />
                       <YAxis stroke="#94a3b8" fontSize={9} tickLine={false} axisLine={false} tickFormatter={(v) => `${(v/1000).toFixed(0)}k`} />
                       <Tooltip contentStyle={{ borderRadius: '12px', fontSize: '10px' }} />
-                      <Line type="monotone" dataKey="wage" stroke="#2563eb" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                      <Line type="monotone" dataKey="wage" stroke={role === 'perawat' ? "#2563eb" : "#8b5cf6"} strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
@@ -639,7 +794,7 @@ export default function MemberReport({ role, title }: MemberReportProps) {
                         paddingAngle={10}
                         dataKey="value"
                       >
-                        <Cell fill="#2563eb" />
+                        <Cell fill={role === 'perawat' ? "#2563eb" : "#8b5cf6"} />
                         <Cell fill="#f97316" />
                       </Pie>
                       <Tooltip />
@@ -653,14 +808,14 @@ export default function MemberReport({ role, title }: MemberReportProps) {
                 <div className="flex flex-col gap-2 mt-4">
                   <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-widest">
                     <div className="flex items-center gap-2">
-                       <div className="w-2 h-2 rounded-full bg-[#2563eb]" />
-                       <span>Komisi ({(stats.jasa / stats.totalWage * 100).toFixed(1)}%)</span>
+                       <div className={cn("w-2 h-2 rounded-full", role === 'perawat' ? "bg-[#2563eb]" : "bg-[#8b5cf6]")} />
+                       <span>Komisi ({(stats.jasa / Math.max(1, stats.totalWage) * 100).toFixed(1)}%)</span>
                     </div>
                   </div>
                   <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-widest">
                     <div className="flex items-center gap-2">
                        <div className="w-2 h-2 rounded-full bg-[#f97316]" />
-                       <span>Gaji ({(stats.baseSalary / stats.totalWage * 100).toFixed(1)}%)</span>
+                       <span>Gaji ({(stats.baseSalary / Math.max(1, stats.totalWage) * 100).toFixed(1)}%)</span>
                     </div>
                   </div>
                 </div>
@@ -673,13 +828,13 @@ export default function MemberReport({ role, title }: MemberReportProps) {
                       <div key={idx} className="space-y-1.5">
                         <div className="flex justify-between items-center text-[9px] font-black uppercase">
                           <span className="text-slate-700 truncate max-w-[150px]">{t.name}</span>
-                          <span className="text-blue-600">Rp {(t.totalComm || 0).toLocaleString()}</span>
+                          <span className={role === 'perawat' ? "text-blue-600" : "text-violet-600"}>Rp {(t.totalComm || 0).toLocaleString()}</span>
                         </div>
                         <div className="h-1 w-full bg-slate-50 rounded-full overflow-hidden">
                           <motion.div 
                             initial={{ width: 0 }}
-                            animate={{ width: `${(t.totalComm / stats.treatments[0].totalComm) * 100}%` }}
-                            className="h-full bg-blue-600 rounded-full"
+                            animate={{ width: `${(t.totalComm / Math.max(1, stats.treatments[0]?.totalComm || 1)) * 100}%` }}
+                            className={cn("h-full rounded-full", role === 'perawat' ? "bg-blue-600" : "bg-violet-600")}
                           />
                         </div>
                       </div>
@@ -970,47 +1125,53 @@ export default function MemberReport({ role, title }: MemberReportProps) {
             </motion.div>
           )}
 
-          {deletingCategoryName && (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 pointer-events-auto"
-            >
+          {deletingCategoryName && (() => {
+            const remainingCats = procedureCategories.filter(cat => cat.name !== deletingCategoryName);
+            const computedFallbackCatName = remainingCats.find(cat => cat.name === 'Umum' || cat.name === 'Jasa Medis')?.name 
+              || remainingCats[0]?.name 
+              || 'Umum';
+            return (
               <motion.div 
-                initial={{ scale: 0.95, y: 15 }}
-                animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.95, y: 15 }}
-                className="bg-white rounded-[2rem] shadow-2xl border border-slate-100 max-w-sm w-full overflow-hidden"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 pointer-events-auto"
               >
-                <div className="p-6 sm:p-8 text-center space-y-4">
-                  <div className="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto shadow-sm">
-                    <Trash2 className="w-6 h-6" />
+                <motion.div 
+                  initial={{ scale: 0.95, y: 15 }}
+                  animate={{ scale: 1, y: 0 }}
+                  exit={{ scale: 0.95, y: 15 }}
+                  className="bg-white rounded-[2rem] shadow-2xl border border-slate-100 max-w-sm w-full overflow-hidden"
+                >
+                  <div className="p-6 sm:p-8 text-center space-y-4">
+                    <div className="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto shadow-sm">
+                      <Trash2 className="w-6 h-6" />
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="text-base font-black text-slate-800 uppercase tracking-tight">Hapus Kategori?</h3>
+                      <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                        Apakah Anda yakin ingin menghapus kategori "{deletingCategoryName}"? Tindakan ini akan memindahkan semua produk dan item transaksi yang menggunakan kategori ini ke kategori "{computedFallbackCatName}".
+                      </p>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <h3 className="text-base font-black text-slate-800 uppercase tracking-tight">Hapus Kategori?</h3>
-                    <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                      Apakah Anda yakin ingin menghapus kategori "{deletingCategoryName}"? Tindakan ini akan memindahkan semua produk dan item transaksi yang menggunakan kategori ini ke kategori "Jasa Medis".
-                    </p>
+                  <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-center gap-3">
+                    <button 
+                      onClick={() => setDeletingCategoryName(null)}
+                      className="flex-1 py-2.5 text-[10px] font-black uppercase text-slate-400 hover:text-slate-600 tracking-widest transition-colors text-center"
+                    >
+                      Batal
+                    </button>
+                    <button 
+                      onClick={confirmDeleteCategory}
+                      className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white text-[10px] font-black uppercase tracking-wider rounded-xl shadow-lg shadow-red-600/10 transition-colors text-center"
+                    >
+                      Hapus
+                    </button>
                   </div>
-                </div>
-                <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-center gap-3">
-                  <button 
-                    onClick={() => setDeletingCategoryName(null)}
-                    className="flex-1 py-2.5 text-[10px] font-black uppercase text-slate-400 hover:text-slate-600 tracking-widest transition-colors text-center"
-                  >
-                    Batal
-                  </button>
-                  <button 
-                    onClick={confirmDeleteCategory}
-                    className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white text-[10px] font-black uppercase tracking-wider rounded-xl shadow-lg shadow-red-600/10 transition-colors text-center"
-                  >
-                    Hapus
-                  </button>
-                </div>
+                </motion.div>
               </motion.div>
-            </motion.div>
-          )}
+            );
+          })()}
         </AnimatePresence>
       </div>
     </div>

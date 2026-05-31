@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Clock, LogIn, LogOut, Calendar, 
-  User, CheckCircle2, AlertCircle, Search, X,
+  User, CheckCircle2, AlertCircle, Search, X, Check,
   ChevronLeft, ChevronRight, Filter, BarChart3 as ChartIcon
 } from 'lucide-react';
 import { 
@@ -14,13 +14,85 @@ import {
 } from '../lib/firebase';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../hooks/useAuth';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useMotionValue, useTransform } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { subDays, format, isSameDay, startOfDay } from 'date-fns';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+function SlideButton({ 
+  onConfirm, 
+  title, 
+  colorClass = "bg-blue-600 hover:bg-blue-700",
+  icon: Icon
+}: { 
+  onConfirm: () => void; 
+  title: string; 
+  colorClass?: string;
+  icon: any; 
+}) {
+  const [dragged, setDragged] = useState(false);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const x = useMotionValue(0);
+  const [trackWidth, setTrackWidth] = useState(0);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      setTrackWidth(containerRef.current.clientWidth);
+    }
+  }, []);
+
+  const handleDragEnd = () => {
+    const width = trackWidth || 280;
+    const threshold = (width - 64) * 0.75; // Slide 75% of track to confirm
+    if (x.get() > threshold) {
+      setDragged(true);
+      onConfirm();
+      setTimeout(() => {
+        x.set(0);
+        setDragged(false);
+      }, 1500);
+    } else {
+      x.set(0);
+    }
+  };
+
+  return (
+    <div 
+      ref={containerRef}
+      className="relative w-full h-16 bg-zinc-950 border border-zinc-800 rounded-3xl overflow-hidden flex items-center justify-between p-1 select-none shadow-inner"
+    >
+      <motion.div 
+        style={{ width: useTransform(x, (val) => `${Math.min(100, (val / ((trackWidth || 280) - 56)) * 100 + 20)}%`) }}
+        className={cn("absolute left-0 top-0 bottom-0 opacity-15 rounded-l-2xl", colorClass.split(' ')[0])}
+      />
+
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
+          {dragged ? 'Memproses...' : title}
+        </span>
+      </div>
+
+      <motion.div
+        drag="x"
+        dragConstraints={{ left: 0, right: trackWidth ? trackWidth - 62 : 220 }}
+        dragElastic={0.05}
+        dragMomentum={false}
+        onDragEnd={handleDragEnd}
+        style={{ x }}
+        className={cn("w-14 h-14 rounded-2xl flex items-center justify-center cursor-grab active:cursor-grabbing shadow-lg z-10 text-white transition-all bg-gradient-to-r", colorClass)}
+      >
+        <Icon className="w-5 h-5" />
+      </motion.div>
+
+      <div className="pr-4 pointer-events-none z-0 opacity-20">
+        <span className="text-xs font-black text-zinc-400 font-mono">&gt;&gt;</span>
+      </div>
+    </div>
+  );
 }
 
 interface AttendanceRecord {
@@ -50,7 +122,7 @@ export default function Attendance() {
 
   // Overtime Form States
   const [isOvertimeModalOpen, setIsOvertimeModalOpen] = useState(false);
-  const [overtimeHours, setOvertimeHours] = useState(0);
+  const [overtimeHours, setOvertimeHours] = useState(1);
   const [overtimeNotes, setOvertimeNotes] = useState('');
   const [submittingOvertime, setSubmittingOvertime] = useState(false);
   
@@ -239,8 +311,9 @@ export default function Attendance() {
     return d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
   };
 
-  const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr);
+  const formatDate = (dateStr: any) => {
+    if (!dateStr) return '';
+    const d = typeof dateStr === 'object' && dateStr ? (dateStr.toDate ? dateStr.toDate() : new Date(dateStr.seconds ? dateStr.seconds * 1000 : dateStr)) : new Date(dateStr);
     return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
   };
 
@@ -253,7 +326,7 @@ export default function Attendance() {
   }
 
   return (
-    <div className="flex-1 p-4 md:p-10 space-y-8 pb-20 md:pb-10">
+    <div className="flex-1 p-4 md:p-10 space-y-8 pb-20 md:pb-10 overflow-y-auto custom-scrollbar h-full">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h2 className="text-3xl font-black text-white tracking-tighter">Absensi</h2>
@@ -284,12 +357,15 @@ export default function Attendance() {
                     <h3 className="text-2xl font-black text-white tracking-tight mb-2">Selamat Datang!</h3>
                     <p className="text-xs text-zinc-400 leading-relaxed italic">"Kerja keras adalah jembatan menuju mimpi."</p>
                   </div>
-                  <button 
-                    onClick={handleClockIn}
-                    className="w-full py-5 bg-blue-600 text-white rounded-3xl text-sm font-black uppercase tracking-widest shadow-2xl shadow-blue-900/40 active:scale-95 transition-all hover:bg-blue-700 flex items-center justify-center gap-4"
-                  >
-                    <LogIn className="w-5 h-5" /> Clock In Sekarang
-                  </button>
+                  <div className="space-y-3">
+                    <SlideButton 
+                      onConfirm={handleClockIn}
+                      title="Geser untuk Clock In"
+                      colorClass="bg-blue-600 hover:bg-blue-700 from-blue-600 to-indigo-600 text-white"
+                      icon={LogIn}
+                    />
+                    <p className="text-[9px] text-zinc-500 font-bold text-center uppercase tracking-wider">Tarik slider biru ke kanan untuk masuk shift</p>
+                  </div>
                 </>
               ) : todayRecord && !todayRecord.clockOut ? (
                 <>
@@ -319,12 +395,15 @@ export default function Attendance() {
                       );
                     })()}
                   </div>
-                  <button 
-                    onClick={handleClockOut}
-                    className="w-full py-5 bg-zinc-800 text-zinc-400 rounded-3xl text-sm font-black uppercase tracking-widest active:scale-95 transition-all hover:bg-red-600 hover:text-white group flex items-center justify-center gap-4"
-                  >
-                    <LogOut className="w-5 h-5" /> Clock Out
-                  </button>
+                  <div className="space-y-3">
+                    <SlideButton 
+                      onConfirm={handleClockOut}
+                      title="Geser untuk Clock Out"
+                      colorClass="bg-red-600 hover:bg-red-700 from-red-600 to-rose-600 text-white"
+                      icon={LogOut}
+                    />
+                    <p className="text-[9px] text-zinc-500 font-bold text-center uppercase tracking-wider">Tarik slider merah ke kanan untuk pulang shift</p>
+                  </div>
                 </>
               ) : (
                 <>
@@ -576,20 +655,26 @@ export default function Attendance() {
               </div>
 
               <div className="p-8 space-y-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-zinc-400 tracking-wider block">Jumlah Jam Lembur</label>
-                  <div className="relative">
-                    <input 
-                      type="number" 
-                      min="1" 
-                      max="12" 
-                      step="0.5"
-                      value={overtimeHours || ''}
-                      onChange={(e) => setOvertimeHours(parseFloat(e.target.value) || 0)}
-                      placeholder="Contoh: 2 atau 3.5"
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-5 py-3.5 text-sm text-white focus:outline-none focus:border-amber-500 font-mono"
-                    />
-                    <span className="absolute right-5 top-1/2 -translate-y-1/2 text-xs font-bold text-zinc-500">JAM</span>
+                <div className="space-y-3 bg-zinc-950/60 p-6 rounded-3xl border border-zinc-800/80">
+                  <div className="flex justify-between items-center">
+                    <label className="text-[10px] font-black uppercase text-amber-500 tracking-wider block">Jumlah Jam Lembur</label>
+                    <span className="text-xl font-black font-mono text-white bg-amber-500/15 border border-amber-500/30 px-3 py-1 rounded-xl">{overtimeHours || 1} JAM</span>
+                  </div>
+                  <input 
+                    type="range" 
+                    min="1" 
+                    max="12" 
+                    step="0.5"
+                    value={overtimeHours || 1}
+                    onChange={(e) => setOvertimeHours(parseFloat(e.target.value) || 1)}
+                    className="w-full accent-amber-500 cursor-pointer h-2 bg-zinc-900 rounded-lg appearance-none"
+                  />
+                  <div className="flex justify-between text-[8px] font-mono text-zinc-600 font-bold px-1">
+                    <span>1 JAM</span>
+                    <span>3 JAM</span>
+                    <span>6 JAM</span>
+                    <span>9 JAM</span>
+                    <span>12 JAM</span>
                   </div>
                 </div>
 
@@ -604,21 +689,22 @@ export default function Attendance() {
                   />
                 </div>
 
-                <div className="flex gap-4 pt-2">
+                <div className="space-y-4 pt-2">
+                  <div className="space-y-2">
+                    <SlideButton 
+                      onConfirm={handleSubmitOvertime}
+                      title={submittingOvertime ? "Mengirim..." : `Geser untuk Ajukan ${overtimeHours || 1} Jam`}
+                      colorClass="bg-amber-500 hover:bg-amber-600 from-amber-500 to-amber-600 text-black border-amber-400"
+                      icon={Check}
+                    />
+                    <p className="text-[9px] text-zinc-500 font-bold text-center uppercase tracking-wider">Geser slider kuning ke kanan untuk kirim pengajuan</p>
+                  </div>
                   <button 
                     type="button"
                     onClick={() => setIsOvertimeModalOpen(false)}
-                    className="flex-1 py-4 bg-zinc-850 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-all rounded-2xl text-[10px] font-black uppercase tracking-widest"
+                    className="w-full py-4 bg-zinc-850 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-all rounded-2xl text-[10px] font-black uppercase tracking-widest"
                   >
                     Batal
-                  </button>
-                  <button 
-                    type="button"
-                    disabled={submittingOvertime}
-                    onClick={handleSubmitOvertime}
-                    className="flex-1 py-4 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-black font-black uppercase tracking-widest rounded-2xl transition-all flex items-center justify-center gap-2"
-                  >
-                    {submittingOvertime ? 'Mengirim...' : 'Kirim Pengajuan'}
                   </button>
                 </div>
               </div>

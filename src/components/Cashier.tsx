@@ -480,8 +480,22 @@ export default function Cashier() {
       // Resolve matched/selected patient to synchronize patient profile fields with the sale transaction
       const patientData = selectedPatientProfile || activePatientInDB;
 
+      // Apply commissions mapping to ensure each item has explicit data & defaults for any reports/dashboards
+      const sanitizedItems = cart.map(item => {
+        const isService = item.type === 'service';
+        return {
+          ...item,
+          sharingType: item.sharingType || 'percentage',
+          doctorCommission: item.doctorCommission !== undefined && item.doctorCommission !== null ? Number(item.doctorCommission) : (isService ? 30 : 0),
+          nurseCommission: item.nurseCommission !== undefined && item.nurseCommission !== null ? Number(item.nurseCommission) : (isService ? 10 : 0),
+          adminCommission: item.adminCommission !== undefined && item.adminCommission !== null ? Number(item.adminCommission) : (isService ? 5 : 0),
+          ownerCommission: item.ownerCommission !== undefined && item.ownerCommission !== null ? Number(item.ownerCommission) : (isService ? 10 : 0),
+          financeCommission: item.financeCommission !== undefined && item.financeCommission !== null ? Number(item.financeCommission) : (isService ? 5 : 0),
+        };
+      });
+
       const tx: Omit<SaleTransaction, 'id'> = {
-        items: cart,
+        items: sanitizedItems,
         subtotal,
         discount: calculatedDiscount,
         total,
@@ -518,6 +532,134 @@ export default function Cashier() {
         } : {})
       };
       const docRef = await addDoc(collection(db, 'sales'), tx);
+
+      // Automatically synchronize and log KPI entries for the doctor, nurse, and creator (cashier)
+      try {
+        // Find existing KPI templates to extract realistic prices or use fallback SEED prices
+        const templatesSnap = await getDocs(collection(db, 'kpi_templates'));
+        const templatesList = templatesSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+
+        const getTemplate = (role: string, taskPrefix: string) => {
+          return templatesList.find(t => 
+            t.role?.toLowerCase() === role.toLowerCase() && 
+            t.taskName?.toLowerCase().includes(taskPrefix.toLowerCase())
+          );
+        };
+
+        // Determine if cart has service items
+        const serviceItems = cart.filter(item => item.type === 'service');
+        const serviceCount = serviceItems.reduce((acc, item) => acc + item.quantity, 0);
+
+        // 1. If Doctor assigned, log KPI for Doc
+        if (selectedDoctorId) {
+          const docName = doctors.find(d => d.uid === selectedDoctorId)?.displayName || 'Dokter Gigi';
+          // If there are services/procedures, log 'tindakan', otherwise 'konsultasi'
+          const taskName = serviceCount > 0 ? 'Tindakan Medis Khusus' : 'Konsultasi Rawat Jalan';
+          const matchedTemp = getTemplate('dokter', taskName);
+          const price = matchedTemp?.price || (serviceCount > 0 ? 150000 : 50000);
+          const unit = matchedTemp?.unit || (serviceCount > 0 ? 'Prosedur' : 'Pasien');
+          const value = serviceCount > 0 ? serviceCount : 1;
+
+          await addDoc(collection(db, 'kpi_entries'), {
+            userId: selectedDoctorId,
+            userName: docName,
+            userRole: 'dokter',
+            date: serverTimestamp(),
+            workDescription: `Otomatis: Melayani Transaksi Kasir #${docRef.id} - ${customerName}`,
+            metrics: [{
+              templateId: matchedTemp?.id || 'doc-auto',
+              label: matchedTemp?.taskName || taskName,
+              value,
+              unit,
+              price,
+              subtotal: value * price
+            }],
+            totalAmount: value * price,
+            status: 'validated'
+          });
+        }
+
+        // 2. If Nurse assigned, log KPI for Nurse
+        if (selectedNurseId) {
+          const nurseName = nurses.find(n => n.uid === selectedNurseId)?.displayName || 'Suster Indah';
+          // Log 'pemberian obat' or fallback
+          const taskName = serviceCount > 0 ? 'Pemberian Obat & Injeksi' : 'Homecare / Visit Medis';
+          const matchedTemp = getTemplate('perawat', taskName);
+          const price = matchedTemp?.price || (serviceCount > 0 ? 5000 : 30000);
+          const unit = matchedTemp?.unit || (serviceCount > 0 ? 'Dosis' : 'Pasien');
+          const value = 1;
+
+          await addDoc(collection(db, 'kpi_entries'), {
+            userId: selectedNurseId,
+            userName: nurseName,
+            userRole: 'perawat',
+            date: serverTimestamp(),
+            workDescription: `Otomatis: Membantu Transaksi Kasir #${docRef.id} - ${customerName}`,
+            metrics: [{
+              templateId: matchedTemp?.id || 'nurse-auto',
+              label: matchedTemp?.taskName || taskName,
+              value,
+              unit,
+              price,
+              subtotal: value * price
+            }],
+            totalAmount: value * price,
+            status: 'validated'
+          });
+        }
+
+        // 3. Log KPI for Cashier/Creator of the transaction
+        if (user?.uid) {
+          const creatorRole = profile?.role || 'admin';
+          const creatorName = profile?.displayName || 'Staff Klinik';
+          let taskName = 'Verifikasi Bayar Transaksi';
+          let fallbackPrice = 10000;
+          let fallbackUnit = 'Transaksi';
+
+          if (creatorRole === 'admin') {
+            taskName = 'Input Data Pasien';
+            fallbackPrice = 10000;
+            fallbackUnit = 'Pasien';
+          } else if (creatorRole === 'keuangan') {
+            taskName = 'Invoice Selesai';
+            fallbackPrice = 15000;
+            fallbackUnit = 'Lembar';
+          } else if (creatorRole === 'PIC') {
+            taskName = 'Koordinasi Operasional Tim';
+            fallbackPrice = 45000;
+            fallbackUnit = 'Sesi';
+          } else if (creatorRole === 'owner') {
+            taskName = 'Review Strategi Manajemen';
+            fallbackPrice = 200000;
+            fallbackUnit = 'Keputusan';
+          }
+
+          const matchedTemp = getTemplate(creatorRole, taskName);
+          const price = matchedTemp?.price || fallbackPrice;
+          const unit = matchedTemp?.unit || fallbackUnit;
+          const value = 1;
+
+          await addDoc(collection(db, 'kpi_entries'), {
+            userId: user.uid,
+            userName: creatorName,
+            userRole: creatorRole,
+            date: serverTimestamp(),
+            workDescription: `Otomatis: Menginput/Memproses Transaksi Kasir #${docRef.id} - ${customerName}`,
+            metrics: [{
+              templateId: matchedTemp?.id || 'creator-auto',
+              label: matchedTemp?.taskName || taskName,
+              value,
+              unit,
+              price,
+              subtotal: value * price
+            }],
+            totalAmount: value * price,
+            status: 'validated'
+          });
+        }
+      } catch (kpiErr) {
+        console.warn("Could not automatically log KPI for transaction:", kpiErr);
+      }
       
       // Update stock
       for (const item of cart) {

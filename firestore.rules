@@ -25,7 +25,10 @@ service cloud.firestore {
     }
 
     function isOwner() {
-      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserData().role == 'owner';
+      return isSignedIn() && (
+        request.auth.token.email == 'kurniawangamatya37@gmail.com' ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserData().role == 'owner')
+      );
     }
 
     function isKeuangan() {
@@ -192,14 +195,9 @@ service cloud.firestore {
     }
 
     match /sales/{saleId} {
-      allow read: if isSignedIn() && (
-        isAdmin() || isOwner() || isKeuangan() || isApoteker() || 
-        resource.data.doctorId == request.auth.uid || 
-        resource.data.nurseId == request.auth.uid ||
-        resource.data.createdBy == request.auth.uid
-      );
+      allow read: if isSignedIn();
       allow create: if isSignedIn();
-      allow update: if isAdmin() || isOwner() || isKeuangan();
+      allow update: if isAdmin() || isOwner() || isKeuangan() || isDokter() || isPerawat();
       allow delete: if isAdmin() || isOwner();
     }
 
@@ -243,26 +241,24 @@ service cloud.firestore {
 
     match /kpi_entries/{entryId} {
       allow list: if isSignedIn() && (
-        request.auth.token.email == 'kurniawangamatya37@gmail.com' ||
-        isAdmin() || isOwner() || isPIC() || 
+        isOwner() || 
         resource.data.userId == request.auth.uid
       );
       allow get: if isSignedIn() && (
-        request.auth.token.email == 'kurniawangamatya37@gmail.com' ||
-        isAdmin() || isOwner() || isPIC() || 
+        isOwner() || 
         resource.data.userId == request.auth.uid
       );
       allow create: if isSignedIn() && incoming().userId == request.auth.uid;
       allow update: if isSignedIn() && (
-        isAdmin() || isOwner() || isPIC() || 
+        isOwner() || 
         (existing().userId == request.auth.uid && existing().status == 'pending')
       );
-      allow delete: if isAdmin() || isOwner();
+      allow delete: if isOwner();
     }
 
     match /kpi_templates/{templateId} {
       allow read: if isSignedIn();
-      allow write: if isAdmin() || isOwner();
+      allow write: if isSignedIn();
     }
   }
 }

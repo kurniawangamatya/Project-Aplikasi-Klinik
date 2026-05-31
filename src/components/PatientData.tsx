@@ -192,25 +192,14 @@ export default function PatientData() {
     if (!profile) return;
     setLoading(true);
 
-    // Sales Query - Role based - Limit to 6 months and 200 results to prevent quota exhaustion
+    // Sales Query - Limit to 6 months and 200 results to prevent quota exhaustion
     const sixMonthsAgo = subMonths(new Date(), 6);
-    let salesQ;
-    if (profile.role === 'admin' || profile.role === 'owner' || profile.role === 'keuangan') {
-      salesQ = query(
-        collection(db, 'sales'), 
-        where('createdAt', '>=', sixMonthsAgo),
-        orderBy('createdAt', 'desc'),
-        limit(200)
-      );
-    } else {
-      // If nurse or doctor, they only see their own. 
-      salesQ = query(collection(db, 'sales'), 
-        where(profile.role === 'dokter' ? 'doctorId' : 'nurseId', '==', profile.uid), 
-        where('createdAt', '>=', sixMonthsAgo),
-        orderBy('createdAt', 'desc'),
-        limit(200)
-      );
-    }
+    const salesQ = query(
+      collection(db, 'sales'), 
+      where('createdAt', '>=', sixMonthsAgo),
+      orderBy('createdAt', 'desc'),
+      limit(200)
+    );
 
     const unsubSales = onSnapshot(salesQ, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SaleTransaction));

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { auth, db, googleProvider, signInWithPopup, signOut, doc, getDoc, setDoc, query, collection, where, getDocs, deleteDoc, onSnapshot, serverTimestamp, limit } from '../lib/firebase';
 import { UserProfile, UserRole } from '../types';
-import { onAuthStateChanged, User, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { onAuthStateChanged, User, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInAnonymously } from 'firebase/auth';
 
 interface AuthContextType {
   user: User | null;
@@ -35,9 +35,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [simulatedUser, setSimulatedUser] = useState<any | null>(() => {
     try {
       const saved = localStorage.getItem('clinic_simulated_user');
-      if (saved) {
-        localStorage.setItem('force_local_simulation', 'true');
-      }
       return saved ? JSON.parse(saved) : null;
     } catch (e) {
       return null;
@@ -63,9 +60,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       unsubProfile = onSnapshot(doc(db, 'users', currentUser.uid), async (snap) => {
         if (snap.exists()) {
           const data = snap.data() as UserProfile;
-          // Force admin role for the bootstrap user
-          if (currentUser.email === 'kurniawangamatya37@gmail.com' && data.role !== 'admin') {
-            await setDoc(doc(db, 'users', currentUser.uid), { role: 'admin' }, { merge: true });
+          // Force owner role for the bootstrap user
+          if (currentUser.email === 'kurniawangamatya37@gmail.com' && data.role !== 'owner') {
+            await setDoc(doc(db, 'users', currentUser.uid), { role: 'owner' }, { merge: true });
             // The next snapshot will have the correct role
             return;
           }
@@ -147,11 +144,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // setProfile(newProfile); // onSnapshot will pick this up
           } else {
             // Truly new user
-            const defaultRole: UserRole = currentUser.email === 'kurniawangamatya37@gmail.com' ? 'admin' : 'owner';
+            let defaultRole: UserRole = currentUser.email === 'kurniawangamatya37@gmail.com' ? 'owner' : 'owner';
+            let displayName = currentUser.displayName || 'User';
+            let email = currentUser.email || '';
+
+            try {
+              const cachedSimRaw = localStorage.getItem('clinic_simulated_user');
+              if (cachedSimRaw) {
+                const cachedSim = JSON.parse(cachedSimRaw);
+                if (cachedSim && cachedSim.email) {
+                  email = cachedSim.email;
+                  displayName = cachedSim.displayName || displayName;
+                  const emailPrefix = cachedSim.email.split('@')[0].toLowerCase();
+                  const possibleRoles = ['admin', 'owner', 'keuangan', 'dokter', 'perawat', 'apoteker', 'media', 'PIC'];
+                  if (possibleRoles.includes(emailPrefix)) {
+                    defaultRole = emailPrefix as UserRole;
+                  }
+                }
+              }
+            } catch (e) {
+              console.warn("Could not read simulated user details:", e);
+            }
+
             const newProfile: UserProfile = {
               uid: currentUser.uid,
-              email: currentUser.email || '',
-              displayName: currentUser.displayName || 'User',
+              email: email,
+              displayName: displayName,
               role: defaultRole,
               photoURL: currentUser.photoURL || null
             };
@@ -224,7 +242,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const emailPrefix = currentUser.email ? currentUser.email.split('@')[0].toLowerCase() : 'admin';
           const fallbackRole: UserRole = ['admin', 'owner', 'keuangan', 'dokter', 'perawat', 'apoteker', 'media', 'PIC'].includes(emailPrefix) 
             ? (emailPrefix as UserRole) 
-            : (currentUser.email === 'kurniawangamatya37@gmail.com' ? 'admin' : 'owner');
+            : (currentUser.email === 'kurniawangamatya37@gmail.com' ? 'owner' : 'owner');
           
           const fallbackProfile: UserProfile = {
             uid: currentUser.uid,
@@ -243,6 +261,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(fbUser);
         setupProfileListener(fbUser);
       } else if (simulatedUser) {
+        const isOffline = localStorage.getItem('force_local_simulation') === 'true';
+        if (!isOffline) {
+          try {
+            await signInAnonymously(auth);
+            return;
+          } catch (e) {
+            console.warn("Failed to sign in anonymously for cloud sync:", e);
+          }
+        }
         setUser(simulatedUser);
         setupProfileListener(simulatedUser);
       } else {
@@ -319,7 +346,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       role = possibleRoles.includes(emailPrefix) ? (emailPrefix as UserRole) : 'owner';
 
       if (emailLower === 'kurniawangamatya37@gmail.com') {
-        role = 'admin';
+        role = 'owner';
       }
 
       const newProfile: UserProfile = {
@@ -371,7 +398,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       localStorage.setItem('clinic_simulated_user', JSON.stringify(mockUser));
-      localStorage.setItem('force_local_simulation', 'true');
     } catch (e) {}
 
     setSimulatedUser(mockUser);
@@ -410,7 +436,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       password: data.password,
       displayName: data.displayName.trim(),
       role: data.role,
-      specialization: data.specialization || ''
+      specialization: data.specialization || '',
+      salary: data.salary || 3000000,
+      hourlyRate: data.hourlyRate || 15000
     };
 
     accounts.push(newAccount);
@@ -612,6 +640,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem('clinic_simulated_user');
       localStorage.removeItem('force_local_simulation');
       localStorage.removeItem('clinic_cache_profile');
+      localStorage.removeItem('clinic_cache_rolePermissions');
       setSimulatedUser(null);
       setUser(null);
       setProfile(null);

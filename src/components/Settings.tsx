@@ -474,6 +474,7 @@ function TabButton({ active, label, description, icon, onClick }: { active: bool
 
 function TeamManagement({ users, onUpdateRole }: { users: UserProfile[], onUpdateRole: (uid: string, role: UserRole) => Promise<void> }) {
   const { employees } = useData();
+  const { profile } = useAuth();
   const [search, setSearch] = useState('');
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
   const [saving, setSaving] = useState(false);
@@ -698,20 +699,40 @@ function TeamManagement({ users, onUpdateRole }: { users: UserProfile[], onUpdat
                 </div>
               </div>
 
-              <select 
-                value={user.role}
-                onChange={(e) => onUpdateRole(user.uid, e.target.value as UserRole)}
-                className="bg-zinc-800 text-[10px] font-black text-zinc-400 uppercase tracking-widest px-3 py-2 rounded-xl border border-zinc-700 outline-none hover:text-white transition-all cursor-pointer"
-              >
-                <option value="owner">Owner</option>
-                <option value="admin">Admin</option>
-                <option value="keuangan">Keuangan</option>
-                <option value="dokter">Dokter</option>
-                <option value="perawat">Perawat</option>
-                <option value="apoteker">Apoteker</option>
-                <option value="media">Media</option>
-                <option value="PIC">PIC</option>
-              </select>
+              <div className="flex items-center gap-2">
+                <select 
+                  value={user.role}
+                  onChange={(e) => onUpdateRole(user.uid, e.target.value as UserRole)}
+                  className="bg-zinc-800 text-[10px] font-black text-zinc-400 uppercase tracking-widest px-3 py-2 rounded-xl border border-zinc-700 outline-none hover:text-white transition-all cursor-pointer"
+                >
+                  <option value="owner">Owner</option>
+                  <option value="admin">Admin</option>
+                  <option value="keuangan">Keuangan</option>
+                  <option value="dokter">Dokter</option>
+                  <option value="perawat">Perawat</option>
+                  <option value="apoteker">Apoteker</option>
+                  <option value="media">Media</option>
+                  <option value="PIC">PIC</option>
+                </select>
+
+                {user.uid !== profile?.uid && (
+                  <button 
+                    onClick={async () => {
+                      if (confirm(`Apakah Anda yakin ingin menghapus akun ${user.displayName}?`)) {
+                        try {
+                          await deleteDoc(doc(db, 'users', user.uid));
+                        } catch (e) {
+                          console.error("Gagal menghapus pengguna:", e);
+                        }
+                      }
+                    }}
+                    className="p-2.5 bg-red-950/20 text-red-500 hover:bg-red-950/40 rounded-xl border border-red-900/30 transition-all"
+                    title="Hapus Pengguna"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
             </div>
           );
         })}
@@ -1135,6 +1156,7 @@ function ProductManagement({ products, categories }: { products: Product[], cate
 }
 
 function CategoryManagement({ categories }: { categories: {id: string, name: string}[] }) {
+  const { products } = useData();
   const [name, setName] = useState('');
   const [editing, setEditing] = useState<string | null>(null);
 
@@ -1151,10 +1173,14 @@ function CategoryManagement({ categories }: { categories: {id: string, name: str
     } catch (e) { console.error(e); }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Hapus kategori? Produk di dalamnya akan dipindahkan ke kategori Umum.')) return;
+  const handleDelete = async (id: string, catName: string) => {
+    if (!confirm(`Hapus kategori "${catName}"? Produk di dalamnya akan dipindahkan ke kategori "Umum".`)) return;
     try {
        await deleteDoc(doc(db, 'categories', id));
+       const productsToUpdate = products.filter(p => p.category === catName);
+       for (const p of productsToUpdate) {
+         await updateDoc(doc(db, 'products', p.id), { category: 'Umum' });
+       }
     } catch (e) { console.error(e); }
   };
 
@@ -1184,7 +1210,7 @@ function CategoryManagement({ categories }: { categories: {id: string, name: str
             <span className="text-xs font-bold text-zinc-300">{c.name}</span>
             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
               <button onClick={() => { setEditing(c.id); setName(c.name); }} className="p-1.5 text-zinc-500 hover:text-blue-500 transition-colors"><Edit3 className="w-3 h-3" /></button>
-              <button onClick={() => handleDelete(c.id)} className="p-1.5 text-zinc-500 hover:text-red-500 transition-colors"><Trash2 className="w-3 h-3" /></button>
+              <button onClick={() => handleDelete(c.id, c.name)} className="p-1.5 text-zinc-500 hover:text-red-500 transition-colors"><Trash2 className="w-3 h-3" /></button>
             </div>
           </div>
         ))}
@@ -1194,21 +1220,23 @@ function CategoryManagement({ categories }: { categories: {id: string, name: str
 }
 
 function PermissionsManagement() {
-  const [permissions, setPermissions] = useState<Record<UserRole, string[]>>({
-    owner: [],
-    admin: [],
-    dokter: [],
-    keuangan: [],
-    perawat: [],
-    apoteker: [],
-    media: [],
-    PIC: []
-  });
+  const DEFAULT_PERMISSIONS: Record<UserRole, string[]> = {
+    owner: ['overview', 'board', 'clinic-boards', 'clinic-task-validate', 'analytics', 'doctor-report', 'nurse-report', 'admin-report', 'team', 'finance', 'payroll', 'attendance', 'patient-data', 'kpi', 'settings'],
+    admin: ['overview', 'board', 'clinic-boards', 'clinic-task-validate', 'admin-report', 'team', 'finance', 'payroll', 'attendance', 'patient-data', 'kpi', 'settings'],
+    keuangan: ['overview', 'board', 'clinic-boards', 'finance', 'payroll', 'attendance', 'patient-data', 'kpi'],
+    dokter: ['overview', 'board', 'clinic-boards', 'doctor-report', 'attendance', 'patient-data', 'kpi'],
+    perawat: ['overview', 'board', 'clinic-boards', 'nurse-report', 'attendance', 'patient-data', 'kpi'],
+    apoteker: ['overview', 'board', 'clinic-boards', 'clinic-task-validate', 'attendance', 'patient-data', 'kpi'],
+    media: ['overview', 'board', 'clinic-boards', 'attendance', 'kpi'],
+    PIC: ['overview', 'board', 'clinic-boards', 'team', 'clinic-task-validate', 'attendance', 'patient-data', 'kpi', 'settings']
+  };
+
+  const [permissions, setPermissions] = useState<Record<UserRole, string[]>>(DEFAULT_PERMISSIONS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   const NAV_ITEMS = [
-    { id: 'board', label: 'Dashboard Klinik', icon: <LayoutDashboard className="w-4 h-4" /> },
+    { id: 'overview', label: 'Dashboard Klinik / Ringkasan', icon: <LayoutDashboard className="w-4 h-4" /> },
     { id: 'clinic-boards', label: 'Clinic Tools (Papan Kerja)', icon: <Package className="w-4 h-4" /> },
     { id: 'clinic-task-validate', label: 'Validasi Tugas (Selesaikan)', icon: <CheckCircle2 className="w-4 h-4" /> },
     { id: 'analytics', label: 'Analitik Visual', icon: <BarChart3 className="w-4 h-4" /> },
@@ -1228,11 +1256,13 @@ function PermissionsManagement() {
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'role_permissions'), (snapshot) => {
-      const perms = { ...permissions };
-      snapshot.docs.forEach(doc => {
-        perms[doc.id as UserRole] = doc.data().navigation || [];
+      setPermissions(prev => {
+        const perms = { ...prev };
+        snapshot.docs.forEach(doc => {
+          perms[doc.id as UserRole] = doc.data().navigation || [];
+        });
+        return perms;
       });
-      setPermissions(perms);
       setLoading(false);
     }, (e) => {
       console.error('Error fetching role matrices:', e);
@@ -1253,8 +1283,16 @@ function PermissionsManagement() {
   const handleSave = async (role: UserRole) => {
     setSaving(true);
     try {
+      let nextNavigation = permissions[role] || [];
+      // Synchronize 'board' permissions with 'clinic-boards' and 'overview' internally to ensure smooth operation
+      if (nextNavigation.includes('clinic-boards') && !nextNavigation.includes('board')) {
+        nextNavigation = [...nextNavigation, 'board'];
+      }
+      if (nextNavigation.includes('overview') && !nextNavigation.includes('board')) {
+        nextNavigation = [...nextNavigation, 'board'];
+      }
       await setDoc(doc(db, 'role_permissions', role), {
-        navigation: permissions[role],
+        navigation: nextNavigation,
         updatedAt: serverTimestamp()
       }, { merge: true });
       alert(`Hak akses untuk ${role} telah diperbarui`);
@@ -1683,7 +1721,7 @@ function PayrollConfig({ employees, users }: { employees: any[], users: any[] })
                       </span>
                       {staff.updatedAt && (
                         <span className="text-[8px] font-bold text-zinc-600 uppercase tracking-tighter">
-                          Update: {staff.updatedAt?.toDate()?.toLocaleDateString()}
+                          Update: {staff.updatedAt?.toDate ? staff.updatedAt.toDate().toLocaleDateString() : new Date(staff.updatedAt).toLocaleDateString()}
                         </span>
                       )}
                     </div>
@@ -1917,7 +1955,7 @@ function AttendanceManagement() {
                     </span>
                   </td>
                   <td className="px-6 py-4 font-mono text-[11px] text-zinc-400">
-                    {record.date}
+                    {typeof record.date === 'object' && record.date ? (record.date.toDate ? record.date.toDate().toLocaleDateString('id-ID') : String(record.date)) : record.date}
                   </td>
                   <td className="px-6 py-4 text-xs text-zinc-300">
                     <span className="font-mono text-[11px] bg-zinc-900 px-2 py-1 rounded border border-zinc-800">{formatTime(record.clockIn)}</span>
@@ -2000,7 +2038,9 @@ function AttendanceManagement() {
             <div className="flex justify-between items-center pb-2 border-b border-zinc-800">
               <div>
                 <h4 className="text-md font-black text-white">{editingRecord.userName}</h4>
-                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-0.5">{editingRecord.date}</p>
+                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-0.5">
+                  {typeof editingRecord.date === 'object' && editingRecord.date ? (editingRecord.date.toDate ? editingRecord.date.toDate().toLocaleDateString('id-ID') : String(editingRecord.date)) : editingRecord.date}
+                </p>
               </div>
               <button onClick={() => setEditingRecord(null)} className="p-1 text-zinc-500 hover:text-white"><X className="w-5 h-5" /></button>
             </div>
@@ -2087,6 +2127,108 @@ function CustomizationManagement() {
   const [localSimActive, setLocalSimActive] = useState(() => {
     return localStorage.getItem('force_local_simulation') === 'true';
   });
+
+  const [localDataDetails, setLocalDataDetails] = useState<{
+    hasLocalData: boolean;
+    productsCount: number;
+    categoriesCount: number;
+    salesCount: number;
+    usersCount: number;
+    employeesCount: number;
+  }>({
+    hasLocalData: false,
+    productsCount: 0,
+    categoriesCount: 0,
+    salesCount: 0,
+    usersCount: 0,
+    employeesCount: 0,
+  });
+
+  const [migrating, setMigrating] = useState(false);
+  const [migrationSucceeded, setMigrationSucceeded] = useState(false);
+  const [migrationStats, setMigrationStats] = useState('');
+
+  const checkLocalData = () => {
+    try {
+      const prodRaw = localStorage.getItem('clinic_simdb_products');
+      const catRaw = localStorage.getItem('clinic_simdb_categories');
+      const salesRaw = localStorage.getItem('clinic_simdb_sales');
+      const usersRaw = localStorage.getItem('clinic_simdb_users');
+      const empRaw = localStorage.getItem('clinic_simdb_employees');
+
+      const products = prodRaw ? JSON.parse(prodRaw) : [];
+      const categories = catRaw ? JSON.parse(catRaw) : [];
+      const sales = salesRaw ? JSON.parse(salesRaw) : [];
+      const users = usersRaw ? JSON.parse(usersRaw) : [];
+      const employees = empRaw ? JSON.parse(empRaw) : [];
+
+      const totalCount = products.length + categories.length + sales.length + users.length + employees.length;
+      if (totalCount > 0) {
+        setLocalDataDetails({
+          hasLocalData: true,
+          productsCount: products.length,
+          categoriesCount: categories.length,
+          salesCount: sales.length,
+          usersCount: users.length,
+          employeesCount: employees.length,
+        });
+      }
+    } catch (e) {
+      console.error("Gagal membaca database offline:", e);
+    }
+  };
+
+  useEffect(() => {
+    checkLocalData();
+  }, []);
+
+  const handleMigrateToCloud = async () => {
+    if (!confirm('Apakah Anda yakin ingin memindahkan seluruh data dari database offline lokal Anda ke Cloud Server? Tindakan ini akan mengunggah ' + 
+      `${localDataDetails.productsCount} Produk, ${localDataDetails.categoriesCount} Kategori, ${localDataDetails.salesCount} Transaksi Kasir, ` +
+      `${localDataDetails.usersCount} Pengguna, dan ${localDataDetails.employeesCount} Karyawan ke server cloud Anda.`)) return;
+
+    setMigrating(true);
+    try {
+      let count = 0;
+      const collectionsToMigrate = [
+        { key: 'clinic_simdb_categories', colName: 'categories' },
+        { key: 'clinic_simdb_products', colName: 'products' },
+        { key: 'clinic_simdb_users', colName: 'users' },
+        { key: 'clinic_simdb_employees', colName: 'employees' },
+        { key: 'clinic_simdb_sales', colName: 'sales' },
+        { key: 'clinic_simdb_boards', colName: 'boards' },
+        { key: 'clinic_simdb_role_permissions', colName: 'role_permissions' },
+        { key: 'clinic_simdb_attendance', colName: 'attendance' },
+      ];
+
+      for (const item of collectionsToMigrate) {
+        const raw = localStorage.getItem(item.key);
+        if (raw) {
+          const arr = JSON.parse(raw);
+          if (Array.isArray(arr)) {
+            for (const docData of arr) {
+              const docId = docData.id || docData.uid;
+              if (docId) {
+                const { id, ...cleanData } = docData;
+                await setDoc(doc(db, item.colName, docId), cleanData, { merge: true });
+                count++;
+              }
+            }
+          }
+        }
+      }
+
+      setMigrationSucceeded(true);
+      setMigrationStats(`Berhasil memigrasikan ${count} item offline ke Firestore Cloud.`);
+      alert(`Sukses! Semua data offline (${count} item) telah berhasil disinkronisasikan ke Database Cloud Firestore.`);
+      window.location.reload();
+    } catch (e) {
+      console.error("Gagal migrasi data offline ke cloud:", e);
+      alert('Gagal melakukan sinkronisasi data: ' + (e instanceof Error ? e.message : String(e)));
+    } finally {
+      setMigrating(false);
+    }
+  };
 
   const toggleLocalSimulation = () => {
     const nextVal = !localSimActive;
@@ -2285,6 +2427,38 @@ function CustomizationManagement() {
                   </button>
                 </div>
               </div>
+
+              {!localSimActive && localDataDetails.hasLocalData && (
+                <div className="p-5 bg-blue-500/10 border border-blue-500/20 rounded-2xl space-y-3.5">
+                  <div className="space-y-1">
+                    <span className="text-blue-400 font-extrabold text-[11px] block uppercase tracking-wider">📦 MITIGASI DATA OFFLINE ➔ CLOUD FIRESTORE</span>
+                    <p className="text-[10.5px]/relaxed text-zinc-300 font-medium">
+                      Sistem mendeteksi data yang sebelumnya Anda buat saat berada di <strong>Mode Offline / Simulasi</strong> (<strong>{localDataDetails.productsCount}</strong> Produk, <strong>{localDataDetails.categoriesCount}</strong> Kategori, <strong>{localDataDetails.salesCount}</strong> Transaksi, dan <strong>{localDataDetails.employeesCount}</strong> Anggota Staf). 
+                      <br className="mb-1" />
+                      Ketika baru mengaktifkan mode Cloud, database online Google Cloud Anda masih kosong. Silakan pindahkan data offline lama Anda ke server Cloud agar tersinkronisasi sempurna dengan sistem online.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleMigrateToCloud}
+                    disabled={migrating}
+                    className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-[10px] font-black uppercase tracking-wider rounded-xl shadow-lg shadow-blue-600/10 transition-colors flex items-center justify-center gap-2 active:scale-95 duration-200 cursor-pointer"
+                  >
+                    {migrating ? (
+                      <>
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Sedang Memindahkan Data Ke Server Cloud...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Migrasikan Data Offline ke Cloud Sekarang
+                      </>
+                    )}
+                  </button>
+                  <p className="text-[9px] text-zinc-500 text-center font-bold">
+                    *Catatan: Tombol ini aman diklik kapan saja untuk menyelaraskan data offline lokal ke server online baru Anda.
+                  </p>
+                </div>
+              )}
 
               {(isQuotaExceeded || localSimActive) && (
                 <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl text-[10px]/relaxed text-zinc-400">

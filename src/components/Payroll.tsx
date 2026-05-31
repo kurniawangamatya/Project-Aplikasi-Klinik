@@ -181,16 +181,33 @@ export default function Payroll({ setTab }: PayrollProps) {
             commField = 'nurseCommission';
           } else if (sale.createdBy === employee.userId) {
             isMatch = true;
-            commField = 'adminCommission';
+            commField = userRole === 'dokter' ? 'doctorCommission' :
+                        userRole === 'perawat' ? 'nurseCommission' :
+                        userRole === 'keuangan' ? 'financeCommission' :
+                        userRole === 'owner' ? 'ownerCommission' :
+                        'adminCommission';
           }
 
           if (isMatch && sale.items) {
             sale.items.forEach((item: any) => {
               let itemCommission = 0;
               const sharingType = item.sharingType || 'percentage';
-              const commissionVal = Number(item[commField]) || 0;
+              const isService = item.type === 'service';
+              const defaultComm = isService ? (
+                commField === 'doctorCommission' ? 30 : 
+                commField === 'nurseCommission' ? 10 : 
+                commField === 'financeCommission' ? 5 :
+                commField === 'ownerCommission' ? 10 :
+                commField === 'adminCommission' ? 5 : 0
+              ) : 0;
+              const commissionVal = item[commField] !== undefined && item[commField] !== null ? Number(item[commField]) : defaultComm;
 
-              if (sharingType === 'percentage') {
+              let resolvedSharingType = sharingType;
+              if (commissionVal > 100) {
+                resolvedSharingType = 'fixed';
+              }
+
+              if (resolvedSharingType === 'percentage') {
                 itemCommission = (item.price * item.quantity * commissionVal) / 100;
               } else {
                 const multiplier = (commissionVal > 0 && commissionVal < 1000) ? 1000 : 1;
@@ -337,16 +354,33 @@ export default function Payroll({ setTab }: PayrollProps) {
             commField = 'nurseCommission';
           } else if (sale.createdBy === employee.userId) {
             isMatch = true;
-            commField = 'adminCommission';
+            commField = userRole === 'dokter' ? 'doctorCommission' :
+                        userRole === 'perawat' ? 'nurseCommission' :
+                        userRole === 'keuangan' ? 'financeCommission' :
+                        userRole === 'owner' ? 'ownerCommission' :
+                        'adminCommission';
           }
 
           if (isMatch && sale.items) {
             sale.items.forEach((item: any) => {
               let itemCommission = 0;
               const sharingType = item.sharingType || 'percentage';
-              const commissionVal = Number(item[commField]) || 0;
+              const isService = item.type === 'service';
+              const defaultComm = isService ? (
+                commField === 'doctorCommission' ? 30 : 
+                commField === 'nurseCommission' ? 10 : 
+                commField === 'financeCommission' ? 5 :
+                commField === 'ownerCommission' ? 10 :
+                commField === 'adminCommission' ? 5 : 0
+              ) : 0;
+              const commissionVal = item[commField] !== undefined && item[commField] !== null ? Number(item[commField]) : defaultComm;
 
-              if (sharingType === 'percentage') {
+              let resolvedSharingType = sharingType;
+              if (commissionVal > 100) {
+                resolvedSharingType = 'fixed';
+              }
+
+              if (resolvedSharingType === 'percentage') {
                 itemCommission = (item.price * item.quantity * commissionVal) / 100;
               } else {
                 const multiplier = (commissionVal > 0 && commissionVal < 1000) ? 1000 : 1;
