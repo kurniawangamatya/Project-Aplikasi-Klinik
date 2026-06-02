@@ -278,19 +278,21 @@ function AppContent() {
               <div className="mb-6 p-4 rounded-2xl bg-zinc-950/60 border border-violet-950/40 flex items-center justify-between text-left gap-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-1.5 text-[11px] font-bold text-violet-300">
-                    <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                    <span>Database Lokal Offline (Hemat Kuota - Aktif)</span>
+                    <ShieldCheck className={`w-4 h-4 ${isLocalSim ? 'text-emerald-400' : 'text-blue-400'}`} />
+                    <span>{isLocalSim ? 'Database Lokal Offline (Hemat Kuota - Aktif)' : 'Mode Database Online (Firebase Terkoneksi)'}</span>
                   </div>
                   <p className="text-[9.5px]/relaxed text-zinc-400 mt-1">
-                    Mode penyimpanan aman browser aktif. Semua pendaftaran & data tersinkronisasi instan bebas dari limitasi database.
+                    {isLocalSim 
+                      ? "Mode penyimpanan aman browser aktif. Semua pendaftaran & data tersinkronisasi instan bebas dari limitasi database."
+                      : "Mode sinkronisasi cloud real-time aktif menggunakan database Firebase Firestore."}
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={toggleLocalSimulation}
-                  className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${isLocalSim || true ? 'bg-emerald-500' : 'bg-zinc-800'}`}
+                  className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${isLocalSim ? 'bg-emerald-500' : 'bg-zinc-800'}`}
                 >
-                  <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${(isLocalSim || true) ? 'translate-x-5' : 'translate-x-0'}`} />
+                  <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isLocalSim ? 'translate-x-5' : 'translate-x-0'}`} />
                 </button>
               </div>
 
