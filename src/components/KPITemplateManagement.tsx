@@ -221,19 +221,19 @@ export default function KPITemplateManagement() {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
-      <div className="bg-zinc-950/50 p-8 rounded-[2.5rem] border border-zinc-800 relative overflow-hidden">
+      <div className="bg-white dark:bg-zinc-950/50 p-8 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 relative overflow-hidden shadow-sm dark:shadow-none">
         <div className="absolute top-0 right-0 p-8 hidden md:block">
           <button
             onClick={handleSyncDefaultTemplates}
             disabled={isSyncing}
-            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/25 text-emerald-400 disabled:opacity-50 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500/10 dark:bg-emerald-500/15 hover:bg-emerald-550/20 dark:hover:bg-emerald-500/25 border border-emerald-350 dark:border-emerald-500/25 text-emerald-600 dark:text-emerald-400 disabled:opacity-50 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
             {isSyncing ? 'Menyinkronkan...' : 'Sinkron ke Semua Role'}
           </button>
         </div>
 
-        <h3 className="text-xl font-black text-white uppercase tracking-tighter mb-1">Manajemen Template KPI</h3>
+        <h3 className="text-xl font-black text-zinc-900 dark:text-white uppercase tracking-tighter mb-1">Manajemen Template KPI</h3>
         <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-6">Atur nominal insentif dan tindakan per kompetensi klinik atau masing-masing akun user</p>
         
         {/* Mobile sync utility */}
@@ -241,7 +241,7 @@ export default function KPITemplateManagement() {
           <button
             onClick={handleSyncDefaultTemplates}
             disabled={isSyncing}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 disabled:opacity-50 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all"
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 disabled:opacity-50 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all"
           >
             <RefreshCw className={`w-3 h-3 ${isSyncing ? 'animate-spin' : ''}`} />
             {isSyncing ? 'Menyinkronkan...' : 'Sinkron ke Semua Role'}
@@ -249,16 +249,16 @@ export default function KPITemplateManagement() {
         </div>
 
         {/* Target Type Picker */}
-        <div className="mb-6 bg-zinc-900/60 p-4 rounded-2xl border border-zinc-800/80 max-w-md">
-          <label className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em] block mb-2">Tipe Sasaran KPI</label>
+        <div className="mb-6 bg-zinc-50 dark:bg-zinc-900/60 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800/80 max-w-md shadow-sm dark:shadow-none">
+          <label className="text-[9px] font-black text-zinc-550 text-zinc-500 uppercase tracking-[0.2em] block mb-2">Tipe Sasaran KPI</label>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => setForm({ ...form, targetType: 'role', userId: '', userDisplayName: '', userEmail: '' })}
               className={`flex-1 py-2 px-4 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all ${
                 form.targetType === 'role' 
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-900/20' 
-                  : 'bg-zinc-950 text-zinc-500 hover:text-zinc-300'
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-900/20 shadow-neutral-400/20' 
+                  : 'bg-zinc-100 dark:bg-zinc-950 text-zinc-600 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'
               }`}
             >
               Per Peran (Role)
@@ -278,8 +278,8 @@ export default function KPITemplateManagement() {
               }}
               className={`flex-1 py-2 px-4 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all ${
                 form.targetType === 'user' 
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-900/20' 
-                  : 'bg-zinc-950 text-zinc-500 hover:text-zinc-300'
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-900/20 shadow-neutral-400/20' 
+                  : 'bg-zinc-100 dark:bg-zinc-950 text-zinc-600 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'
               }`}
             >
               Per Akun / User
@@ -290,11 +290,11 @@ export default function KPITemplateManagement() {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
           {form.targetType === 'role' ? (
             <div className="md:col-span-2 space-y-2 animate-fade-in">
-              <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Peran / Role</label>
+              <label className="text-[10px] font-black text-zinc-550 text-zinc-500 uppercase tracking-widest ml-1">Peran / Role</label>
               <select 
                 value={form.role}
                 onChange={(e) => setForm({...form, role: e.target.value})}
-                className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3.5 px-3 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-blue-600 transition-all cursor-pointer"
+                className="w-full bg-white dark:bg-zinc-900 border border-zinc-250 dark:border-zinc-800 rounded-xl py-3.5 px-3 text-xs font-bold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-600 transition-all cursor-pointer"
               >
                 {AVAILABLE_ROLES.map(role => (
                   <option key={role} value={role}>{role.toUpperCase()}</option>
@@ -303,7 +303,7 @@ export default function KPITemplateManagement() {
             </div>
           ) : (
             <div className="md:col-span-2 space-y-2 animate-fade-in">
-              <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Pilih Akun</label>
+              <label className="text-[10px] font-black text-zinc-550 text-zinc-500 uppercase tracking-widest ml-1">Pilih Akun</label>
               <select 
                 value={form.userId}
                 onChange={(e) => {
@@ -316,7 +316,7 @@ export default function KPITemplateManagement() {
                     role: selectedUser?.role || 'dokter'
                   });
                 }}
-                className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3.5 px-3 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-blue-600 transition-all cursor-pointer"
+                className="w-full bg-white dark:bg-zinc-900 border border-zinc-250 dark:border-zinc-800 rounded-xl py-3.5 px-3 text-xs font-bold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-600 transition-all cursor-pointer"
               >
                 <option value="">-- Pilih Akun --</option>
                 {users.map(u => (
@@ -329,41 +329,41 @@ export default function KPITemplateManagement() {
           )}
 
           <div className="md:col-span-3 space-y-2">
-            <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Nama Tugas KPI</label>
+            <label className="text-[10px] font-black text-zinc-550 text-zinc-500 uppercase tracking-widest ml-1">Nama Tugas KPI</label>
             <input 
               type="text"
               value={form.taskName}
               onChange={(e) => setForm({...form, taskName: e.target.value})}
               placeholder="Contoh: Tambal Composite"
-              className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3.5 px-4 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-blue-600 transition-all font-sans"
+              className="w-full bg-white dark:bg-zinc-900 border border-zinc-250 dark:border-zinc-800 rounded-xl py-3.5 px-4 text-xs font-bold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-600 transition-all font-sans"
             />
           </div>
           <div className="md:col-span-2 space-y-2">
-            <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Satuan Unit</label>
+            <label className="text-[10px] font-black text-zinc-550 text-zinc-500 uppercase tracking-widest ml-1">Satuan Unit</label>
             <input 
               type="text"
               value={form.unit}
               onChange={(e) => setForm({...form, unit: e.target.value})}
               placeholder="Misal: Pasien"
-              className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3.5 px-4 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-blue-600 transition-all font-sans"
+              className="w-full bg-white dark:bg-zinc-900 border border-zinc-250 dark:border-zinc-800 rounded-xl py-3.5 px-4 text-xs font-bold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-600 transition-all font-sans"
             />
           </div>
           <div className="md:col-span-3 space-y-2">
-            <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Insentif Per Unit (Rp)</label>
+            <label className="text-[10px] font-black text-zinc-550 text-zinc-500 uppercase tracking-widest ml-1">Insentif Per Unit (Rp)</label>
             <input 
               type="number"
               value={form.price || ''}
               onChange={(e) => setForm({...form, price: Number(e.target.value)})}
               placeholder="0"
-              className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3.5 px-4 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-blue-600 transition-all font-mono"
+              className="w-full bg-white dark:bg-zinc-900 border border-zinc-250 dark:border-zinc-800 rounded-xl py-3.5 px-4 text-xs font-bold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-600 transition-all font-mono"
             />
           </div>
           <div className="md:col-span-2 space-y-2">
-            <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Aturan Payout</label>
+            <label className="text-[10px] font-black text-zinc-550 text-zinc-500 uppercase tracking-widest ml-1">Aturan Payout</label>
             <select
               value={form.payoutRule}
               onChange={(e) => setForm({...form, payoutRule: e.target.value})}
-              className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3.5 px-3 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-blue-600 transition-all cursor-pointer"
+              className="w-full bg-white dark:bg-zinc-900 border border-zinc-250 dark:border-zinc-800 rounded-xl py-3.5 px-3 text-xs font-bold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-600 transition-all cursor-pointer"
             >
               <option value="standar">Standar</option>
               <option value="bonus">Bonus</option>
@@ -393,7 +393,7 @@ export default function KPITemplateManagement() {
                   unit: 'tindakan' 
                 }); 
               }}
-              className="px-8 py-4 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer"
+              className="px-8 py-4 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-650 dark:text-zinc-400 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer"
             >
               Batal
             </button>
@@ -411,11 +411,13 @@ export default function KPITemplateManagement() {
         
         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
           {/* Roles Filters */}
-          <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-zinc-950/40 rounded-2xl border border-zinc-800/80">
+          <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-zinc-50 dark:bg-zinc-950/40 rounded-2xl border border-zinc-200 dark:border-zinc-805">
             <button
               onClick={() => { setSelectedRoleFilter('semua'); setSelectedUserFilter('all'); }}
               className={`px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${
-                selectedRoleFilter === 'semua' && selectedUserFilter === 'all' ? 'bg-zinc-800 text-white shadow' : 'text-zinc-500 hover:text-zinc-300'
+                selectedRoleFilter === 'semua' && selectedUserFilter === 'all' 
+                  ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm' 
+                  : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'
               }`}
             >
               Semua ({templates.length})
@@ -427,7 +429,9 @@ export default function KPITemplateManagement() {
                   key={role}
                   onClick={() => { setSelectedRoleFilter(role); setSelectedUserFilter('all'); }}
                   className={`px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${
-                    selectedRoleFilter === role && selectedUserFilter === 'all' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/15' : 'text-zinc-500 hover:text-zinc-300'
+                    selectedRoleFilter === role && selectedUserFilter === 'all' 
+                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/15' 
+                      : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'
                   }`}
                 >
                   {role} ({count})
@@ -437,7 +441,7 @@ export default function KPITemplateManagement() {
           </div>
 
           {/* User Filter Dropdown */}
-          <div className="flex items-center gap-2 bg-zinc-950/40 px-4 py-1.5 rounded-2xl border border-zinc-800/80 self-start xl:self-auto">
+          <div className="flex items-center gap-2 bg-zinc-50 dark:bg-zinc-950/40 px-4 py-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800/80 self-start xl:self-auto">
             <User className="w-3.5 h-3.5 text-zinc-500" />
             <span className="text-[9px] font-black uppercase text-zinc-500 whitespace-nowrap">Atau Filter Per Akun:</span>
             <select
@@ -450,13 +454,13 @@ export default function KPITemplateManagement() {
                   setSelectedRoleFilter('semua');
                 }
               }}
-              className="bg-transparent text-[9px] font-black text-zinc-400 hover:text-white uppercase tracking-widest border-none outline-none cursor-pointer py-1 max-w-[180px] truncate"
+              className="bg-transparent text-[9px] font-black text-zinc-655 text-zinc-600 dark:text-zinc-400 hover:text-zinc-905 dark:hover:text-white uppercase tracking-widest border-none outline-none cursor-pointer py-1 max-w-[180px] truncate"
             >
-              <option value="all" className="bg-zinc-950 text-white">Semua Akun</option>
+              <option value="all" className="bg-white dark:bg-zinc-950 text-zinc-900 dark:text-white">Semua Akun</option>
               {users.map(u => {
                 const count = templates.filter(t => t.userId === u.uid).length;
                 return (
-                  <option key={u.uid} value={u.uid} className="bg-zinc-950 text-white">
+                  <option key={u.uid} value={u.uid} className="bg-white dark:bg-zinc-950 text-zinc-900 dark:text-white">
                     {u.displayName || u.email} ({count})
                   </option>
                 );
@@ -466,17 +470,17 @@ export default function KPITemplateManagement() {
         </div>
       </div>
 
-      <div className="bg-zinc-900 rounded-[2.5rem] border border-zinc-800 overflow-hidden overflow-x-auto">
+      <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 overflow-hidden overflow-x-auto shadow-sm dark:shadow-none">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="border-b border-zinc-800 bg-zinc-900/50">
+            <tr className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50">
               <th className="px-8 py-5 text-[10px] font-black uppercase text-zinc-500 tracking-widest">Sasaran Template / Akun</th>
               <th className="px-8 py-5 text-[10px] font-black uppercase text-zinc-500 tracking-widest">Tugas KPI</th>
               <th className="px-8 py-5 text-[10px] font-black uppercase text-zinc-500 tracking-widest text-right">Harga (Rp)</th>
               <th className="px-8 py-5 text-[10px] font-black uppercase text-zinc-500 tracking-widest text-right">Aksi</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-800/50">
+          <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800/50">
             {filteredTemplates.length === 0 ? (
               <tr>
                 <td colSpan={4} className="px-8 py-16 text-center text-zinc-500 text-xs">
@@ -485,12 +489,12 @@ export default function KPITemplateManagement() {
               </tr>
             ) : (
               filteredTemplates.map((t) => (
-                <tr key={t.id} className="hover:bg-zinc-800/20 transition-colors group">
+                <tr key={t.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/20 transition-colors group">
                   <td className="px-8 py-4">
                     {t.userId ? (
                       <div className="flex flex-col gap-1 items-start">
-                        <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-1 bg-emerald-950/80 text-emerald-400 rounded-lg border border-emerald-800/60 flex items-center gap-1.5">
-                          <User className="w-2.5 h-2.5 text-emerald-400" />
+                        <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 rounded-lg border border-emerald-200 dark:border-emerald-800/60 flex items-center gap-1.5 shadow-sm">
+                          <User className="w-2.5 h-2.5 text-emerald-500 dark:text-emerald-400" />
                           Akun: {t.userDisplayName || 'Karyawan'}
                         </span>
                         <span className="text-[8px] text-zinc-500 font-bold uppercase tracking-widest px-1">
@@ -498,31 +502,31 @@ export default function KPITemplateManagement() {
                         </span>
                       </div>
                     ) : (
-                      <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-1 bg-zinc-850 text-zinc-400 rounded-lg group-hover:bg-blue-600/10 group-hover:text-blue-505 transition-all border border-zinc-800 group-hover:border-blue-500/25">
+                      <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-1 bg-zinc-100 dark:bg-zinc-850 text-zinc-600 dark:text-zinc-400 rounded-lg group-hover:bg-blue-600/10 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-all border border-zinc-200 dark:border-zinc-800 group-hover:border-blue-500/25">
                         Peran: {t.role}
                       </span>
                     )}
                   </td>
                   <td className="px-8 py-4">
-                    <p className="text-xs font-bold text-white">{t.taskName}</p>
+                    <p className="text-xs font-bold text-zinc-900 dark:text-white">{t.taskName}</p>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-[9px] font-bold text-zinc-600 uppercase">Per {t.unit || 'tindakan'}</span>
+                      <span className="text-[9px] font-bold text-zinc-500 dark:text-zinc-600 uppercase">Per {t.unit || 'tindakan'}</span>
                       <span className={cn(
                         "text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded",
-                        t.payoutRule === 'bonus' ? "bg-blue-500/10 text-blue-400" : "bg-zinc-800 text-zinc-500"
+                        t.payoutRule === 'bonus' ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-500"
                       )}>
                         {t.payoutRule || 'standar'}
                       </span>
                     </div>
                   </td>
                   <td className="px-8 py-4 text-right">
-                    <p className="text-xs font-black text-emerald-500 font-mono">Rp {(t.price || 0).toLocaleString()}</p>
+                    <p className="text-xs font-black text-emerald-600 dark:text-emerald-500 font-mono">Rp {(t.price || 0).toLocaleString()}</p>
                   </td>
                   <td className="px-8 py-4 text-right">
                     <div className="flex justify-end gap-2">
                       <button 
                         onClick={() => handleEditClick(t)}
-                        className="p-2.5 bg-zinc-800 text-zinc-400 hover:text-white rounded-xl transition-all cursor-pointer"
+                        className="p-2.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-650 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white rounded-xl transition-all cursor-pointer"
                         title="Edit Template"
                       >
                         <Edit3 className="w-3.5 h-3.5" />
@@ -545,7 +549,7 @@ export default function KPITemplateManagement() {
                           </button>
                           <button 
                             onClick={() => setConfirmDeleteId(null)}
-                            className="px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-[8px] font-black uppercase tracking-wider"
+                            className="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 rounded-lg text-[8px] font-black uppercase tracking-wider"
                           >
                             Batal
                           </button>
@@ -553,7 +557,7 @@ export default function KPITemplateManagement() {
                       ) : (
                         <button 
                           onClick={() => setConfirmDeleteId(t.id)}
-                          className="p-2.5 bg-zinc-800 text-zinc-400 hover:text-red-500 rounded-xl transition-all cursor-pointer"
+                          className="p-2.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-650 dark:text-zinc-400 hover:text-red-500 rounded-xl transition-all cursor-pointer"
                           title="Hapus Template"
                         >
                           <Trash2 className="w-3.5 h-3.5" />

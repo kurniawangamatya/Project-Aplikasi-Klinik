@@ -154,7 +154,7 @@ export default function FinancialDashboard() {
     const rows = top5.map(cat => [
       cat.name,
       cat.value,
-      `${((cat.value / totalRevenue) * 100).toFixed(1)}%`
+      `${(totalRevenue > 0 ? (cat.value / totalRevenue) * 100 : 0).toFixed(1)}%`
     ]);
 
     const csvContent = [
@@ -347,7 +347,7 @@ export default function FinancialDashboard() {
                         <span className="text-xs text-zinc-400 font-medium truncate max-w-[120px]">{cat.name}</span>
                       </div>
                       <span className="text-xs font-mono font-bold text-white">
-                        {((cat.value / totalRevenue) * 100).toFixed(1)}%
+                        {totalRevenue > 0 ? ((cat.value / totalRevenue) * 100).toFixed(1) : '0.0'}%
                       </span>
                     </div>
                   ))}

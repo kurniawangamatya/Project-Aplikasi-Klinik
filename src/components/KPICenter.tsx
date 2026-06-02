@@ -441,19 +441,19 @@ export default function KPICenter() {
   }, [entries, search, userFilter, activeTab, profile?.uid]);
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-zinc-950 font-sans text-zinc-300">
+    <div className="flex-1 flex flex-col min-h-0 bg-zinc-50 dark:bg-zinc-950 font-sans text-zinc-800 dark:text-zinc-300">
       {/* Header Banner */}
-      <div className="p-8 pb-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-zinc-900 bg-zinc-900/10">
+      <div className="p-8 pb-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-zinc-200 dark:border-zinc-900 bg-white dark:bg-zinc-900/10">
         <div>
           <div className="flex items-center gap-2 mb-1.5Packed">
-            <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-full text-[9px] font-black tracking-widest uppercase border border-emerald-500/20 shadow-sm animate-pulse">
+            <span className="px-3 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full text-[9px] font-black tracking-widest uppercase border border-emerald-500/20 shadow-sm animate-pulse">
               Live Performance Rewards
             </span>
-            <span className="px-3 py-1 bg-blue-500/10 text-blue-400 rounded-full text-[9px] font-black tracking-widest uppercase border border-blue-500/20 shadow-sm">
+            <span className="px-3 py-1 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-full text-[9px] font-black tracking-widest uppercase border border-blue-500/20 shadow-sm">
               Kasir Style Edition
             </span>
           </div>
-          <h1 className="text-3xl font-black text-white tracking-tighter uppercase">MANAJEMEN KPI & REWARD</h1>
+          <h1 className="text-3xl font-black text-zinc-900 dark:text-white tracking-tighter uppercase">MANAJEMEN KPI & REWARD</h1>
           <p className="text-xs text-zinc-500 font-bold uppercase tracking-widest mt-1 flex items-center gap-1.5">
             <Target className="w-4 h-4 text-emerald-500" /> Transparan • Instan • Real-Time Payout
           </p>
@@ -475,13 +475,13 @@ export default function KPICenter() {
       <div className="flex-1 flex flex-col p-8 pt-6 gap-6 min-h-0">
         
         {/* Navigation Selector */}
-        <div className="flex flex-wrap items-center justify-between gap-4 bg-zinc-900/40 p-2 rounded-3xl border border-zinc-900">
+        <div className="flex flex-wrap items-center justify-between gap-4 bg-zinc-100 dark:bg-zinc-900/40 p-2 rounded-3xl border border-zinc-200 dark:border-zinc-900">
           <div className="flex flex-wrap p-1 gap-1">
             <button 
               onClick={() => { setActiveTab('my-kpi'); setIsAdding(false); }}
               className={cn(
                 "px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all",
-                activeTab === 'my-kpi' ? "bg-zinc-800 text-white shadow-lg border border-zinc-700/50" : "text-zinc-500 hover:text-zinc-300"
+                activeTab === 'my-kpi' ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-md dark:shadow-lg border border-zinc-200 dark:border-zinc-700/50" : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-305"
               )}
             >
               Dashboard Karyawan
@@ -490,7 +490,7 @@ export default function KPICenter() {
               onClick={() => { setActiveTab('laporan'); setIsAdding(false); }}
               className={cn(
                 "px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all",
-                activeTab === 'laporan' ? "bg-zinc-800 text-white shadow-lg border border-zinc-700/50" : "text-zinc-500 hover:text-zinc-300"
+                activeTab === 'laporan' ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-md dark:shadow-lg border border-zinc-200 dark:border-zinc-700/50" : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-305"
               )}
             >
               Laporan Pendapatan
@@ -500,7 +500,7 @@ export default function KPICenter() {
                 onClick={() => { setActiveTab('validation'); setIsAdding(false); }}
                 className={cn(
                   "px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all gap-1.5 flex items-center",
-                  activeTab === 'validation' ? "bg-zinc-800 text-white shadow-lg border border-zinc-700/50" : "text-zinc-500 hover:text-zinc-300"
+                  activeTab === 'validation' ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-md dark:shadow-lg border border-zinc-200 dark:border-zinc-700/50" : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-305"
                 )}
               >
                 Validation Center (Owner)
@@ -512,7 +512,7 @@ export default function KPICenter() {
                 onClick={() => { setActiveTab('templates'); setIsAdding(false); }}
                 className={cn(
                   "px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all",
-                  activeTab === 'templates' ? "bg-zinc-800 text-white shadow-lg border border-zinc-700/50" : "text-zinc-500 hover:text-zinc-300"
+                  activeTab === 'templates' ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-md dark:shadow-lg border border-zinc-200 dark:border-zinc-700/50" : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-305"
                 )}
               >
                 Template Configurator
@@ -521,25 +521,25 @@ export default function KPICenter() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-zinc-950 border border-zinc-900 rounded-2xl px-4 py-2">
-              <Calendar className="w-3.5 h-3.5 text-zinc-500" />
+            <div className="flex items-center gap-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-900 rounded-2xl px-4 py-2">
+              <Calendar className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
               <input 
                 type="month" 
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                className="bg-transparent text-[10px] font-black text-zinc-300 uppercase tracking-widest outline-none cursor-pointer"
+                className="bg-transparent text-[10px] font-black text-zinc-700 dark:text-zinc-300 uppercase tracking-widest outline-none cursor-pointer"
               />
             </div>
             
             {activeTab !== 'templates' && (
               <div className="relative">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-600" />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400 dark:text-zinc-650" />
                 <input 
                   type="text" 
                   placeholder="Cari log..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="bg-zinc-950 border border-zinc-900 rounded-2xl py-2 pl-9 pr-4 text-[10px] font-bold text-white outline-none focus:ring-1 focus:ring-emerald-500 transition-all w-48"
+                  className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-900 rounded-2xl py-2 pl-9 pr-4 text-[10px] font-bold text-zinc-900 dark:text-white outline-none focus:ring-1 focus:ring-emerald-500 transition-all w-48"
                 />
               </div>
             )}
@@ -689,10 +689,10 @@ export default function KPICenter() {
                 className="space-y-8"
               >
                 {/* Visual Chart Monthly Bonus Trend */}
-                <div className="bg-zinc-900/40 border border-zinc-900 p-8 rounded-[2.5rem] space-y-4">
+                <div className="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-900 p-8 rounded-[2.5rem] space-y-4 shadow-sm dark:shadow-none">
                   <div>
-                    <h3 className="text-base font-black text-white uppercase tracking-tight">Grafik Tren Bonus Bulanan (Rp)</h3>
-                    <p className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Visualisasi total performa akumulatif pendapatan rewards</p>
+                    <h3 className="text-base font-black text-zinc-900 dark:text-white uppercase tracking-tight">Grafik Tren Bonus Bulanan (Rp)</h3>
+                    <p className="text-[9px] text-zinc-550 text-zinc-500 font-bold uppercase tracking-widest">Visualisasi total performa akumulatif pendapatan rewards</p>
                   </div>
                   
                   <div className="h-64 w-full">
@@ -708,12 +708,12 @@ export default function KPICenter() {
                             <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
                           </linearGradient>
                         </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
-                        <XAxis dataKey="name" stroke="#71717a" style={{ fontSize: '10px', fontWeight: 'bold' }} />
-                        <YAxis stroke="#71717a" style={{ fontSize: '10px', fontWeight: 'bold' }} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border-primary)" />
+                        <XAxis dataKey="name" stroke="var(--text-secondary)" style={{ fontSize: '10px', fontWeight: 'bold' }} />
+                        <YAxis stroke="var(--text-secondary)" style={{ fontSize: '10px', fontWeight: 'bold' }} />
                         <Tooltip 
-                          contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px' }}
-                          labelStyle={{ color: '#ffffff', fontWeight: 'bold', fontSize: '12px' }}
+                          contentStyle={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-primary)', borderRadius: '12px' }}
+                          labelStyle={{ color: 'var(--text-primary)', fontWeight: 'bold', fontSize: '12px' }}
                           itemStyle={{ fontSize: '11px', fontWeight: 'bold' }}
                         />
                         <Area type="monotone" dataKey="Total" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorTotal)" name="Total Rewards (Rp)" />
@@ -724,28 +724,28 @@ export default function KPICenter() {
                 </div>
 
                 {/* Calendar Performa Grid */}
-                <div className="bg-zinc-900/40 border border-zinc-900 p-8 rounded-[2.5rem] space-y-6">
+                <div className="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-900 p-8 rounded-[2.5rem] space-y-6 shadow-sm dark:shadow-none">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                      <h3 className="text-base font-black text-white uppercase tracking-tight">Kalender Performa Harian</h3>
-                      <p className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Evaluasi harian pencapaian target rewards Rp 200.000</p>
+                      <h3 className="text-base font-black text-zinc-900 dark:text-white uppercase tracking-tight">Kalender Performa Harian</h3>
+                      <p className="text-[9px] text-zinc-550 text-zinc-500 font-bold uppercase tracking-widest">Evaluasi harian pencapaian target rewards Rp 200.000</p>
                     </div>
                     {/* legend */}
                     <div className="flex flex-wrap gap-3">
-                      <div className="flex items-center gap-1.5 text-[9px] text-zinc-400 font-bold uppercase">
+                      <div className="flex items-center gap-1.5 text-[9px] text-zinc-650 dark:text-zinc-400 font-bold uppercase">
                         <span className="w-2.5 h-2.5 rounded-md bg-emerald-500/20 border border-emerald-500/30" />
                         Target Reached (≥ Rp 200k)
                       </div>
-                      <div className="flex items-center gap-1.5 text-[9px] text-zinc-400 font-bold uppercase">
+                      <div className="flex items-center gap-1.5 text-[9px] text-zinc-650 dark:text-zinc-400 font-bold uppercase">
                         <span className="w-2.5 h-2.5 rounded-md bg-red-500/20 border border-red-500/30" />
                         Penalti Active (&gt;3 missed)
                       </div>
-                      <div className="flex items-center gap-1.5 text-[9px] text-zinc-400 font-bold uppercase">
+                      <div className="flex items-center gap-1.5 text-[9px] text-zinc-650 dark:text-zinc-400 font-bold uppercase">
                         <span className="w-2.5 h-2.5 rounded-md bg-amber-500/20 border border-amber-500/30 animate-pulse" />
                         Pending approval
                       </div>
-                      <div className="flex items-center gap-1.5 text-[9px] text-zinc-400 font-bold uppercase">
-                        <span className="w-2.5 h-2.5 rounded-md bg-zinc-900 border border-zinc-800" />
+                      <div className="flex items-center gap-1.5 text-[9px] text-zinc-650 dark:text-zinc-400 font-bold uppercase">
+                        <span className="w-2.5 h-2.5 rounded-md bg-zinc-200 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800" />
                         Tidak Ada Log
                       </div>
                     </div>
@@ -756,26 +756,26 @@ export default function KPICenter() {
                       <div 
                         key={day.dayNum}
                         className={cn(
-                          "p-4 rounded-2xl border transition-all flex flex-col justify-between h-24 relative overflow-hidden group",
-                          day.status === 'reached' ? "bg-emerald-500/10 border-emerald-500/25 hover:border-emerald-500" :
-                          day.status === 'penalty_alert' ? "bg-red-500/10 border-red-500/25 hover:border-red-500" :
-                          day.status === 'pending' ? "bg-amber-500/10 border-amber-500/25 hover:border-amber-500" :
-                          "bg-zinc-900/50 border-zinc-800 hover:border-zinc-700"
+                          "p-4 rounded-2xl border transition-all flex flex-col justify-between h-24 relative overflow-hidden group hover:shadow-sm",
+                          day.status === 'reached' ? "bg-emerald-500/10 border-emerald-500/25 hover:border-emerald-500 text-emerald-800 dark:text-emerald-400" :
+                          day.status === 'penalty_alert' ? "bg-red-500/10 border-red-500/25 hover:border-red-500 text-red-800 dark:text-red-400" :
+                          day.status === 'pending' ? "bg-amber-500/10 border-amber-500/25 hover:border-amber-500 text-amber-800 dark:text-amber-400" :
+                          "bg-white dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 hover:border-zinc-350 dark:hover:border-zinc-700"
                         )}
                       >
-                        <span className="text-xs font-black text-zinc-400 group-hover:text-white transition-colors">{day.dayNum}</span>
+                        <span className="text-xs font-black text-zinc-500 dark:text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-white transition-colors">{day.dayNum}</span>
                         
                         <div className="flex flex-col">
                           {day.earnings > 0 ? (
                             <>
-                              <span className="text-[10px] font-black text-white font-mono">Rp {day.earnings.toLocaleString()}</span>
+                              <span className="text-[10px] font-black text-zinc-900 dark:text-white font-mono">Rp {day.earnings.toLocaleString()}</span>
                               <span className="text-[7px] font-bold text-zinc-500 uppercase tracking-tight mt-0.5">
                                 {day.status === 'reached' ? 'Target Tercapai' : 
                                  day.status === 'penalty_alert' ? 'Penalti Aktif' : 'Menunggu Owner'}
                               </span>
                             </>
                           ) : (
-                            <span className="text-[8px] font-bold text-zinc-600 uppercase tracking-tighter">Tidak Ada Log</span>
+                            <span className="text-[8px] font-bold text-zinc-450 dark:text-zinc-600 uppercase tracking-tighter">Tidak Ada Log</span>
                           )}
                         </div>
                       </div>
@@ -793,9 +793,9 @@ export default function KPICenter() {
               >
                 {/* Owner live reviews count stats */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-zinc-900/40 p-6 rounded-[2rem] border border-zinc-800 flex items-center justify-between">
+                  <div className="bg-white dark:bg-zinc-900/40 p-6 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 flex items-center justify-between shadow-sm dark:shadow-none">
                     <div>
-                      <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-1.5">Antrean Validasi (Pending)</p>
+                      <p className="text-[9px] font-black text-zinc-550 text-zinc-500 uppercase tracking-widest mb-1.5">Antrean Validasi (Pending)</p>
                       <p className="text-2xl font-black text-amber-500 font-mono">
                         {entries.filter(e => e.status === 'pending').length} Lembar Log
                       </p>
@@ -805,9 +805,9 @@ export default function KPICenter() {
                     </div>
                   </div>
 
-                  <div className="bg-zinc-900/40 p-6 rounded-[2rem] border border-zinc-800 flex items-center justify-between">
+                  <div className="bg-white dark:bg-zinc-900/40 p-6 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 flex items-center justify-between shadow-sm dark:shadow-none">
                     <div>
-                      <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-1.5">Total Cair Disetujui (Validated)</p>
+                      <p className="text-[9px] font-black text-zinc-550 text-zinc-500 uppercase tracking-widest mb-1.5">Total Cair Disetujui (Validated)</p>
                       <p className="text-2xl font-black text-emerald-500 font-mono">
                         Rp {entries.filter(e => e.status === 'validated').reduce((s, e) => s + (e.totalAmount || 0), 0).toLocaleString()}
                       </p>
@@ -817,9 +817,9 @@ export default function KPICenter() {
                     </div>
                   </div>
 
-                  <div className="bg-zinc-900/40 p-6 rounded-[2rem] border border-zinc-800 flex items-center justify-between">
+                  <div className="bg-white dark:bg-zinc-900/40 p-6 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 flex items-center justify-between shadow-sm dark:shadow-none">
                     <div>
-                      <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-1.5">Total Log Ditolak (Rejected)</p>
+                      <p className="text-[9px] font-black text-zinc-550 text-zinc-500 uppercase tracking-widest mb-1.5">Total Log Ditolak (Rejected)</p>
                       <p className="text-2xl font-black text-red-500 font-mono">
                         {entries.filter(e => e.status === 'rejected').length} Log
                       </p>
@@ -832,7 +832,7 @@ export default function KPICenter() {
 
                 {/* Queue lists with Approve/Reject actions */}
                 <div className="space-y-4">
-                  <h3 className="text-base font-black text-white uppercase tracking-tight">Antrean Pengajuan Real-Time (Owner Review)</h3>
+                  <h3 className="text-base font-black text-zinc-900 dark:text-white uppercase tracking-tight">Antrean Pengajuan Real-Time (Owner Review)</h3>
                   
                   <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                     {filteredEntries.map(entry => (
@@ -849,9 +849,9 @@ export default function KPICenter() {
                       />
                     ))}
                     {filteredEntries.length === 0 && (
-                      <div className="col-span-full py-16 text-center bg-zinc-900/15 border border-zinc-900/80 border-dashed rounded-[2.5rem]">
+                      <div className="col-span-full py-16 text-center bg-white dark:bg-zinc-900/15 border border-zinc-200 dark:border-zinc-900/80 border-dashed rounded-[2.5rem] shadow-sm dark:shadow-none">
                         <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-3 animate-bounce" />
-                        <p className="text-xs font-black text-zinc-400 uppercase tracking-wide">Semua Antrean Log Performa Terisi & Tervalidasi!</p>
+                        <p className="text-xs font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Semua Antrean Log Performa Terisi & Tervalidasi!</p>
                       </div>
                     )}
                   </div>
@@ -870,14 +870,14 @@ export default function KPICenter() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   
                   {/* Payout & penalty panel - bold eye catching values */}
-                  <div className="lg:col-span-1 bg-gradient-to-br from-zinc-900 to-zinc-950 p-8 rounded-[3rem] border border-zinc-850 space-y-6 relative overflow-hidden flex flex-col justify-between shadow-2xl">
+                  <div className="lg:col-span-1 bg-white dark:bg-gradient-to-br dark:from-zinc-900 dark:to-zinc-950 p-8 rounded-[3rem] border border-zinc-200 dark:border-zinc-850 space-y-6 relative overflow-hidden flex flex-col justify-between shadow-sm dark:shadow-2xl">
                     <div className="absolute top-0 right-0 p-4 opacity-5">
-                      <Target className="w-40 h-40 text-white" />
+                      <Target className="w-40 h-40 text-black dark:text-white" />
                     </div>
 
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <span className="px-3 py-1 bg-blue-500/10 text-blue-400 border border-blue-500/25 rounded-xl text-[8px] font-black uppercase tracking-widest leading-none">
+                        <span className="px-3 py-1 bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/25 rounded-xl text-[8px] font-black uppercase tracking-widest leading-none">
                           Kalkulator Payout Harian
                         </span>
                         {isPenaltyActive && (
@@ -889,28 +889,28 @@ export default function KPICenter() {
 
                       <div>
                         <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-1">Gaji Pokok Hari Ini setelah Tugas</p>
-                        <p className="text-4xl font-extrabold text-white font-mono tracking-tight">
+                        <p className="text-4xl font-extrabold text-zinc-900 dark:text-white font-mono tracking-tight">
                           Rp {baseSalaryToday.toLocaleString()}
                         </p>
                       </div>
 
-                      <div className="space-y-2 pt-2 border-t border-zinc-850">
-                        <div className="flex items-center justify-between text-xs font-bold text-zinc-400">
+                      <div className="space-y-2 pt-2 border-t border-zinc-100 dark:border-zinc-850">
+                        <div className="flex items-center justify-between text-xs font-bold text-zinc-600 dark:text-zinc-400">
                           <span>Status Target Harian</span>
-                          <span className={isPenaltyActive ? "text-red-400" : "text-emerald-400"}>
+                          <span className={isPenaltyActive ? "text-red-500 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"}>
                             {isPenaltyActive ? "Gaji Standard (Turun ke Rp 100k)" : "Mencapai Target (Rp 200k)"}
                           </span>
                         </div>
-                        <div className="flex items-center justify-between text-xs font-bold text-zinc-400">
+                        <div className="flex items-center justify-between text-xs font-bold text-zinc-600 dark:text-zinc-400">
                           <span>Tambahan Bonus Checklist</span>
-                          <span className="text-blue-400 font-mono">+ Rp {dynamicBonusFromChecklist.toLocaleString()}</span>
+                          <span className="text-blue-600 dark:text-blue-400 font-mono">+ Rp {dynamicBonusFromChecklist.toLocaleString()}</span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="pt-4 mt-4 border-t border-zinc-800/80">
-                      <p className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest mb-1">TOTAL ESTIMASI PEROLEHAN</p>
-                      <p className="text-3xl font-black text-emerald-500 font-mono tracking-tighter">
+                    <div className="pt-4 mt-4 border-t border-zinc-200 dark:border-zinc-800/80">
+                      <p className="text-[9px] text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest mb-1">TOTAL ESTIMASI PEROLEHAN</p>
+                      <p className="text-3xl font-black text-emerald-600 dark:text-emerald-500 font-mono tracking-tighter">
                         Rp {totalCalculatedEarningToday.toLocaleString()}
                       </p>
                       <button 
@@ -929,12 +929,12 @@ export default function KPICenter() {
                   </div>
 
                   {/* Interactive Checklist 10/10 KPI */}
-                  <div className="lg:col-span-2 bg-zinc-900/40 p-8 rounded-[3rem] border border-zinc-900 space-y-6">
+                  <div className="lg:col-span-2 bg-white dark:bg-zinc-900/40 p-8 rounded-[3rem] border border-zinc-200 dark:border-zinc-900 space-y-6 shadow-sm dark:shadow-none">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="text-base font-black text-white uppercase tracking-tight">Kuesioner Checklist Target Harian (Progress 10/10)</h3>
-                          <span className="text-xs font-bold text-emerald-500 font-mono px-2.5 py-1 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
+                          <h3 className="text-base font-black text-zinc-900 dark:text-white uppercase tracking-tight">Kuesioner Checklist Target Harian (Progress 10/10)</h3>
+                          <span className="text-xs font-bold text-emerald-600 dark:text-emerald-500 font-mono px-2.5 py-1 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
                             {completedTasksCount} / {totalTasks} Selesai
                           </span>
                         </div>
@@ -944,7 +944,7 @@ export default function KPICenter() {
                       </div>
 
                       {/* Progress Line */}
-                      <div className="w-full sm:w-40 bg-zinc-950 rounded-full h-2 overflow-hidden border border-zinc-850">
+                      <div className="w-full sm:w-40 bg-zinc-100 dark:bg-zinc-950 rounded-full h-2 overflow-hidden border border-zinc-200 dark:border-zinc-850">
                         <div 
                           className={cn(
                             "h-full transition-all duration-500",
@@ -962,31 +962,31 @@ export default function KPICenter() {
                           key={task.id}
                           onClick={() => setCheckedTasks(prev => ({ ...prev, [task.id]: !prev[task.id] }))}
                           className={cn(
-                            "p-4 rounded-2xl border transition-all cursor-pointer flex items-center gap-3.5 select-none hover:bg-zinc-800/10",
+                            "p-4 rounded-2xl border transition-all cursor-pointer flex items-center gap-3.5 select-none hover:bg-zinc-50 dark:hover:bg-zinc-800/10",
                             checkedTasks[task.id] 
-                              ? "bg-zinc-900 border-zinc-800 text-white" 
-                              : "bg-zinc-950/20 border-zinc-900/80 text-zinc-650"
+                              ? "bg-emerald-50 dark:bg-zinc-900 border-emerald-200 dark:border-zinc-800 text-emerald-950 dark:text-white" 
+                              : "bg-zinc-100/40 dark:bg-zinc-950/20 border-zinc-200 dark:border-zinc-900/80 text-zinc-500 dark:text-zinc-650"
                           )}
                         >
                           <div className={cn(
                             "w-5 h-5 rounded-lg border flex items-center justify-center transition-all shrink-0",
                             checkedTasks[task.id] 
-                              ? "bg-emerald-500 border-emerald-400 text-zinc-950" 
-                              : "bg-zinc-950 border-zinc-800 text-transparent"
+                              ? "bg-emerald-500 border-emerald-400 text-white dark:text-zinc-950" 
+                              : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-transparent"
                           )}>
                             <Check className="w-3.5 h-3.5 stroke-[3]" />
                           </div>
                           <div className="flex-1">
-                            <p className="text-xs font-bold">{task.taskName}</p>
+                            <p className="text-xs font-bold text-zinc-800 dark:text-zinc-205 text-zinc-900 dark:text-white">{task.taskName}</p>
                             <div className="flex items-center gap-2 mt-0.5">
                               <span className={cn(
                                 "text-[7px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded",
-                                task.type === 'bonus' ? "bg-blue-500/10 text-blue-400" : "bg-zinc-800 text-zinc-500"
+                                task.type === 'bonus' ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" : "bg-zinc-150 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-500"
                               )}>
                                 {task.type}
                               </span>
                               {task.price > 0 && (
-                                <span className="text-[8px] font-mono font-bold text-emerald-500">+Rp {task.price.toLocaleString()}</span>
+                                <span className="text-[8px] font-mono font-bold text-emerald-600 dark:text-emerald-500">+Rp {task.price.toLocaleString()}</span>
                               )}
                             </div>
                           </div>
@@ -998,7 +998,7 @@ export default function KPICenter() {
                 </div>
 
                 <div className="space-y-4">
-                  <h3 className="text-base font-black text-white uppercase tracking-tight">Riwayat Pengajuan Log Anda</h3>
+                  <h3 className="text-base font-black text-zinc-900 dark:text-white uppercase tracking-tight">Riwayat Pengajuan Log Anda</h3>
                   
                   <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                     {filteredEntries.map(entry => (
@@ -1015,9 +1015,9 @@ export default function KPICenter() {
                       />
                     ))}
                     {filteredEntries.length === 0 && (
-                      <div className="col-span-full py-16 text-center bg-zinc-900/15 border border-zinc-900/80 border-dashed rounded-[2.5rem]">
-                        <Award className="w-12 h-12 text-zinc-800 mx-auto mb-3" />
-                        <p className="text-xs font-black text-zinc-500 uppercase tracking-wide">Belum ada history pengajuan di bulan ini.</p>
+                      <div className="col-span-full py-16 text-center bg-white dark:bg-zinc-900/15 border border-zinc-200 dark:border-zinc-900/80 border-dashed rounded-[2.5rem] shadow-sm dark:shadow-none">
+                        <Award className="w-12 h-12 text-zinc-400 dark:text-zinc-800 mx-auto mb-3" />
+                        <p className="text-xs font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-wide">Belum ada history pengajuan di bulan ini.</p>
                       </div>
                     )}
                   </div>
@@ -1078,10 +1078,10 @@ function KPIEntryCard({ entry, canValidate, canEdit, canDelete, onValidate, onEd
 
   return (
     <div className={cn(
-      "p-6 rounded-[2.5rem] border transition-all relative overflow-hidden group flex flex-col h-full",
-      entry.status === 'validated' ? "bg-emerald-600/5 border-emerald-500/20" :
-      entry.status === 'rejected' ? "bg-red-600/5 border-red-500/20" :
-      "bg-zinc-900 border-zinc-850 hover:border-zinc-800"
+      "p-6 rounded-[2.5rem] border transition-all relative overflow-hidden group flex flex-col h-full hover:shadow-md",
+      entry.status === 'validated' ? "bg-emerald-50/50 dark:bg-emerald-600/5 border-emerald-200 dark:border-emerald-500/20" :
+      entry.status === 'rejected' ? "bg-red-50/50 dark:bg-red-600/5 border-red-200 dark:border-red-500/20" :
+      "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-850 hover:border-zinc-300 dark:hover:border-zinc-800"
     )}>
       {/* Decorative side bar */}
       <div className={cn(
@@ -1094,7 +1094,7 @@ function KPIEntryCard({ entry, canValidate, canEdit, canDelete, onValidate, onEd
       <div className="flex flex-col gap-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-zinc-950 border border-zinc-800 flex items-center justify-center group-hover:scale-105 transition-transform">
+            <div className="w-12 h-12 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center group-hover:scale-105 transition-transform">
               <User className={cn(
                 "w-6 h-6",
                 entry.status === 'validated' ? "text-emerald-500" :
@@ -1103,11 +1103,11 @@ function KPIEntryCard({ entry, canValidate, canEdit, canDelete, onValidate, onEd
               )} />
             </div>
             <div>
-              <h4 className="text-sm font-black text-white leading-none mb-1">{entry.userName}</h4>
+              <h4 className="text-sm font-black text-zinc-900 dark:text-white leading-none mb-1">{entry.userName}</h4>
               <div className="flex items-center gap-2">
                 <span className="text-[9px] font-black uppercase text-zinc-500 tracking-widest">{entry.userRole}</span>
-                <span className="w-1 h-1 rounded-full bg-zinc-850" />
-                <span className="text-[9px] font-bold text-zinc-650 flex items-center gap-1">
+                <span className="w-1 h-1 rounded-full bg-zinc-200 dark:bg-zinc-850" />
+                <span className="text-[9px] font-bold text-zinc-500 dark:text-zinc-650 flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
                   {entry.date ? (entry.date.toDate ? entry.date.toDate().toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : new Date(entry.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })) : ''}
                 </span>
@@ -1119,7 +1119,7 @@ function KPIEntryCard({ entry, canValidate, canEdit, canDelete, onValidate, onEd
             {canEdit && (
               <button 
                 onClick={onEdit}
-                className="p-1.5 text-zinc-500 hover:text-white hover:bg-zinc-850 rounded-lg transition-all cursor-pointer"
+                className="p-1.5 text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-850 rounded-lg transition-all cursor-pointer"
                 title="Edit Laporan"
               >
                 <Edit3 className="w-4 h-4" />
@@ -1136,9 +1136,9 @@ function KPIEntryCard({ entry, canValidate, canEdit, canDelete, onValidate, onEd
             )}
             <span className={cn(
               "px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border",
-              entry.status === 'validated' ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" :
-              entry.status === 'rejected' ? "bg-red-500/10 border-red-500/20 text-red-500" :
-              "bg-blue-500/10 border-blue-500/20 text-blue-500"
+              entry.status === 'validated' ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-500" :
+              entry.status === 'rejected' ? "bg-red-500/10 border-red-500/20 text-red-550 dark:text-red-500" :
+              "bg-blue-500/10 border-blue-500/20 text-blue-600 dark:text-blue-500"
             )}>
               {entry.status === 'validated' ? 'Terverifikasi' : entry.status === 'rejected' ? 'Ditolak' : 'Menunggu'}
             </span>
@@ -1146,38 +1146,38 @@ function KPIEntryCard({ entry, canValidate, canEdit, canDelete, onValidate, onEd
         </div>
 
         <div className="space-y-4 flex-1">
-          <p className="text-xs font-medium text-zinc-300 leading-relaxed italic">
+          <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300 leading-relaxed italic">
             "{entry.workDescription}"
           </p>
 
           {entry.metrics && entry.metrics.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {entry.metrics.map((m: any, idx: number) => (
-                <div key={idx} className="bg-zinc-950/50 p-4 rounded-2xl border border-zinc-850 flex items-center justify-between">
+                <div key={idx} className="bg-zinc-50/50 dark:bg-zinc-950/50 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-850 flex items-center justify-between">
                   <div>
-                    <p className="text-[8px] font-black text-zinc-650 uppercase tracking-widest mb-1">{m.label}</p>
-                    <p className="text-sm font-black text-white font-mono flex items-baseline gap-1">
+                    <p className="text-[8px] font-black text-zinc-400 dark:text-zinc-650 uppercase tracking-widest mb-1">{m.label}</p>
+                    <p className="text-sm font-black text-zinc-900 dark:text-white font-mono flex items-baseline gap-1">
                       {m.value}
                       <span className="text-[9px] font-bold text-zinc-500 normal-case">{m.unit}</span>
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-[8px] font-black text-zinc-650 uppercase tracking-widest">Subtotal</p>
-                    <p className="text-xs font-black text-emerald-500 font-mono">Rp {(m.subtotal || (m.value * m.price)).toLocaleString()}</p>
+                    <p className="text-[8px] font-black text-zinc-400 dark:text-zinc-650 uppercase tracking-widest">Subtotal</p>
+                    <p className="text-xs font-black text-emerald-600 dark:text-emerald-500 font-mono">Rp {(m.subtotal || (m.value * m.price)).toLocaleString()}</p>
                   </div>
                 </div>
               ))}
             </div>
           )}
 
-          <div className="mt-4 p-4 bg-zinc-950 rounded-2xl border border-zinc-900 flex items-center justify-between group-hover:border-emerald-500/30 transition-colors">
+          <div className="mt-4 p-4 bg-zinc-50 dark:bg-zinc-950 rounded-2xl border border-zinc-200 dark:border-zinc-900 flex items-center justify-between group-hover:border-emerald-500/30 transition-colors shadow-inner">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
                 <TrendingUp className="w-5 h-5" />
               </div>
               <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest leading-none">Total Insentif</span>
             </div>
-            <span className="text-xl font-black text-emerald-400 font-mono">Rp {(entry.totalAmount || 0).toLocaleString()}</span>
+            <span className="text-xl font-black text-emerald-600 dark:text-emerald-400 font-mono">Rp {(entry.totalAmount || 0).toLocaleString()}</span>
           </div>
         </div>
 
@@ -1201,7 +1201,7 @@ function KPIEntryCard({ entry, canValidate, canEdit, canDelete, onValidate, onEd
         )}
 
         {entry.status !== 'pending' && (
-          <div className="pt-4 border-t border-zinc-850 flex items-center justify-between relative">
+          <div className="pt-4 border-t border-zinc-200 dark:border-zinc-850 flex items-center justify-between relative">
             <div className="flex items-center gap-2">
                <div className="w-8 h-8 rounded-lg bg-emerald-500/5 border border-emerald-500/10 flex items-center justify-center">
                   <CheckCircle2 className={cn("w-5 h-5", entry.status === 'validated' ? "text-emerald-500" : "text-red-500")} />
@@ -1213,7 +1213,7 @@ function KPIEntryCard({ entry, canValidate, canEdit, canDelete, onValidate, onEd
                  <div className="flex items-center gap-2">
                    {entry.status === 'validated' ? (
                      <div className="flex flex-col">
-                       <p className="text-[10px] font-black text-white uppercase italic font-serif">
+                       <p className="text-[10px] font-black text-zinc-900 dark:text-white uppercase italic font-serif">
                          {entry.validatedName}
                        </p>
                      </div>

@@ -2197,18 +2197,18 @@ const CardItem: React.FC<CardItemProps> = ({ card, allLists, users, allowedNavs,
                           </button>
                         </div>
                         <div className="ml-8 space-y-4">
-                           <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-3">
                              <span className="text-[11px] font-black text-zinc-500 w-8">
-                               {Math.round((editedChecklists.filter(i => i.completed).length / editedChecklists.length) * 100)}%
+                               {editedChecklists.length > 0 ? Math.round((editedChecklists.filter(i => i.completed).length / editedChecklists.length) * 100) : 0}%
                              </span>
                              <div className="h-2 flex-1 bg-zinc-950 rounded-full overflow-hidden border border-zinc-800">
                                <motion.div 
                                  initial={false}
-                                 animate={{ width: `${(editedChecklists.filter(i => i.completed).length / editedChecklists.length) * 100}%` }}
+                                 animate={{ width: `${editedChecklists.length > 0 ? (editedChecklists.filter(i => i.completed).length / editedChecklists.length) * 100 : 0}%` }}
                                  className="h-full bg-blue-500"
                                />
                              </div>
-                           </div>
+                            </div>
                            <div className="space-y-2">
                              {editedChecklists.map((item, cIdx) => (
                                <div key={`modal-chk-item-${item.id || cIdx}`} className="flex items-center gap-3 group">
