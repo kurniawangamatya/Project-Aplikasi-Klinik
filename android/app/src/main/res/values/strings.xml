@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Gimu Andalan</string>
+    <string name="title_activity_main">Gimu Andalan</string>
+    <string name="package_name">com.gimu.andalan</string>
+    <string name="custom_url_scheme">com.gimu.andalan</string>
+</resources>
