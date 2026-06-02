@@ -401,7 +401,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (e) {}
 
     setSimulatedUser(mockUser);
-    setUser(mockUser);
+    setUser(mockUser as any);
   };
 
   const registerOffline = async (data: {
@@ -527,7 +527,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     localStorage.setItem('clinic_simulated_user', JSON.stringify(mockUser));
     setSimulatedUser(mockUser);
-    setUser(mockUser);
+    setUser(mockUser as any);
     setProfile(newProfile);
   };
 
@@ -553,7 +553,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
         localStorage.setItem('clinic_simulated_user', JSON.stringify(mockUser));
         setSimulatedUser(mockUser);
-        setUser(mockUser);
+        setUser(mockUser as any);
         setProfile({
           uid: account.uid,
           email: emailLower,
@@ -602,7 +602,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           };
           localStorage.setItem('clinic_simulated_user', JSON.stringify(mockUser));
           setSimulatedUser(mockUser);
-          setUser(mockUser);
+          setUser(mockUser as any);
           setProfile(found);
           return;
         }

@@ -1005,7 +1005,7 @@ export default function KPICenter() {
                       <KPIEntryCard 
                         key={entry.id} 
                         entry={entry} 
-                        canValidate={canValidate && activeTab === 'validation'} 
+                        canValidate={canValidate && (activeTab as string) === 'validation'} 
                         canEdit={entry.userId === profile?.uid && entry.status === 'pending'}
                         onValidate={handleValidate}
                         onEdit={() => handleEdit(entry)}

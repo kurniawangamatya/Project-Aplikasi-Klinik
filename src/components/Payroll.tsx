@@ -665,7 +665,7 @@ export default function Payroll({ setTab }: PayrollProps) {
                   <h3 className="text-sm font-black uppercase tracking-widest text-zinc-400">Recent Disbursements</h3>
                   <button className="text-[10px] font-bold text-blue-500 hover:underline">View All</button>
                 </div>
-                <div className="bg-zinc-900/50 border border-zinc-900 rounded-[2.5rem] overflow-hidden">
+                <div className="bg-zinc-900/50 border border-zinc-900 rounded-[2.5rem] overflow-hidden overflow-x-auto custom-scrollbar">
                   <table className="w-full text-left">
                     <thead>
                       <tr className="border-b border-zinc-900">
@@ -886,7 +886,7 @@ export default function Payroll({ setTab }: PayrollProps) {
                 {isBulkSlipLoading ? 'Generating...' : 'Export All Slips'}
               </button>
             </div>
-            <div className="bg-zinc-900/50 border border-zinc-900 rounded-[2.5rem] overflow-hidden">
+            <div className="bg-zinc-900/50 border border-zinc-900 rounded-[2.5rem] overflow-hidden overflow-x-auto custom-scrollbar">
              <table className="w-full text-left">
                 <thead>
                   <tr className="border-b border-zinc-900">

@@ -1068,7 +1068,7 @@ export default function DoctorReport() {
                     <span className="w-2 h-6 bg-cyan-600 rounded-full" />
                     Ringkasan Perhitungan Upah Dokter
                   </h3>
-                  <div className="overflow-hidden border border-slate-100 rounded-3xl">
+                  <div className="overflow-hidden overflow-x-auto border border-slate-100 rounded-3xl custom-scrollbar">
                     <table className="w-full text-left">
                       <thead>
                         <tr className="bg-slate-50 border-b border-slate-100">
@@ -1104,7 +1104,7 @@ export default function DoctorReport() {
                     <span className="w-2 h-6 bg-slate-900 rounded-full" />
                     Ringkasan Biaya Tindakan (Omset)
                   </h3>
-                  <div className="overflow-hidden border border-slate-100 rounded-3xl">
+                  <div className="overflow-hidden overflow-x-auto border border-slate-100 rounded-3xl custom-scrollbar">
                     <table className="w-full text-left">
                       <thead>
                         <tr className="bg-slate-50 border-b border-slate-100">
@@ -1217,7 +1217,7 @@ export default function DoctorReport() {
                     <span className="w-2 h-6 bg-indigo-600 rounded-full" />
                     Detail Kontribusi Jasa Medis Per Kategori
                   </h3>
-                  <div className="overflow-hidden border border-slate-100 rounded-3xl">
+                  <div className="overflow-hidden overflow-x-auto border border-slate-100 rounded-3xl custom-scrollbar">
                     <table className="w-full text-left">
                       <thead>
                         <tr className="bg-slate-50 border-b border-slate-100">

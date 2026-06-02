@@ -4,7 +4,8 @@ import { useAuth } from '../hooks/useAuth';
 import { useData } from '../contexts/DataContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { Board, List, Card as CardType, UserProfile, CardTemplate, CardHistory, CardComment, ChecklistItem } from '../types';
-import { Plus, MoreHorizontal, X, ArrowRight, ArrowLeft, Trash2, Edit3, DollarSign, Calendar, Paperclip, Link as LinkIcon, ExternalLink, Archive, Save, Layout, History, MessageSquare, Send, CheckSquare, Square, CheckCircle2, Circle, Maximize2, Minimize2, Check, GripVertical, Image as ImageIcon, Tag, Users, AlignLeft, Download, FileText, FileSpreadsheet, File, BarChart3 } from 'lucide-react';
+import { compressImage } from '../lib/utils';
+import { Plus, MoreHorizontal, X, ArrowRight, ArrowLeft, Trash2, Edit3, DollarSign, Calendar, Paperclip, Link as LinkIcon, ExternalLink, Archive, Save, Layout, History, MessageSquare, Send, CheckSquare, Square, CheckCircle2, Circle, Maximize2, Minimize2, Check, GripVertical, Image as ImageIcon, Tag, Users, AlignLeft, Download, FileText, FileSpreadsheet, File, BarChart3, Lock, Unlock } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'motion/react';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
@@ -27,7 +28,7 @@ const DEFAULT_LABELS = [
 
 export default function BoardView({ boardId }: { boardId: string }) {
   const { user, profile } = useAuth();
-  const { boards, users, rolePermissions } = useData();
+  const { boards, users, rolePermissions, isLayoutLocked, toggleLayoutLock } = useData();
   const { theme } = useTheme();
   const canManageBoards = profile?.role === 'admin' || profile?.role === 'owner' || profile?.role === 'PIC';
   const [lists, setLists] = useState<List[]>([]);
@@ -294,8 +295,30 @@ export default function BoardView({ boardId }: { boardId: string }) {
                   <button 
                     onClick={() => setIsEditingBoardName(true)}
                     className="p-1.5 text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
+                    title="Edit Nama Papan"
                   >
                     <Edit3 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={toggleLayoutLock}
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider transition-all duration-350 select-none ${
+                      isLayoutLocked 
+                        ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20 hover:bg-amber-500/20' 
+                        : 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 hover:bg-emerald-500/20'
+                    }`}
+                    title={isLayoutLocked ? "Klik untuk membuka kunci susunan (untuk geser-geser)" : "Klik untuk mengunci susunan agar aman saat digeser/scroll"}
+                  >
+                    {isLayoutLocked ? (
+                      <>
+                        <Lock className="w-3 h-3 text-amber-500" />
+                        Ter-Kunci
+                      </>
+                    ) : (
+                      <>
+                        <Unlock className="w-3 h-3 text-emerald-500 animate-pulse" />
+                        Dapat Digeser
+                      </>
+                    )}
                   </button>
                 </div>
               )}
@@ -456,7 +479,7 @@ export default function BoardView({ boardId }: { boardId: string }) {
             <Reorder.Item 
               key={list.id} 
               value={list}
-              dragListener={canManageBoards}
+              dragListener={!isLayoutLocked && canManageBoards}
               className="w-[85vw] sm:w-80 md:w-96 flex-shrink-0 touch-none"
             >
               <Column 
@@ -624,6 +647,7 @@ interface ColumnProps {
 
 const Column: React.FC<ColumnProps> = ({ list, cards, onReorderCards, allLists, users, templates, canManage, allowedNavs, boardLabels, boardId }) => {
   const { profile } = useAuth();
+  const { isLayoutLocked } = useData();
   const [isAddingCard, setIsAddingCard] = useState(false);
   const [newCardTitle, setNewCardTitle] = useState('');
   const [newCardPriority, setNewCardPriority] = useState<'low' | 'medium' | 'high'>('medium');
@@ -847,7 +871,7 @@ const Column: React.FC<ColumnProps> = ({ list, cards, onReorderCards, allLists, 
           <Reorder.Item 
             key={card.id} 
             value={card}
-            dragListener={canManage}
+            dragListener={!isLayoutLocked && canManage}
           >
             <CardItem 
               card={card} 
@@ -1199,6 +1223,7 @@ const CardItem: React.FC<CardItemProps> = ({ card, allLists, users, allowedNavs,
   const [editedStatus, setEditedStatus] = useState(card.status);
   const [editedDueDate, setEditedDueDate] = useState(card.dueDate || '');
   const [editedAttachments, setEditedAttachments] = useState<{ name: string; url: string; isCover?: boolean }[]>(card.attachments || []);
+  const [isCompressingFile, setIsCompressingFile] = useState(false);
   const [newAttachmentName, setNewAttachmentName] = useState('');
   const [newAttachmentUrl, setNewAttachmentUrl] = useState('');
   const [showActivityDetails, setShowActivityDetails] = useState(false);
@@ -1396,32 +1421,45 @@ const CardItem: React.FC<CardItemProps> = ({ card, allLists, users, allowedNavs,
     const files = e.target.files;
     if (!files) return;
 
+    setIsCompressingFile(true);
     const newAttachments: { name: string; url: string; isCover?: boolean }[] = [];
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
 
-      // Firestore has a 1MB limit per document. We should keep base64 attachments reasonable.
-      if (file.size > 600000) { 
-        alert(`File "${file.name}" is too large. Please select files smaller than 600KB.`);
-        continue;
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+
+        // Mendukung file sampai ukuran 20MB!
+        if (file.size > 20 * 1024 * 1024) { 
+          alert(`File "${file.name}" terlalu besar. Maksimum ukuran file adalah 20MB.`);
+          continue;
+        }
+
+        // Batas base64 dokumen Firestore adalah 1MB total. 
+        // File gambar otomatis dikompres menjadi ukuran kecil (biasanya ~100KB-300KB) dengan compressImage
+        // Jika file non-gambar (pdf, doc, dll), batasi hingga 1.5MB agar aman di database.
+        if (!file.type.startsWith('image/') && file.size > 1.5 * 1024 * 1024) {
+          alert(`File dokumen "${file.name}" terlalu besar. Untuk file pdf/doc/xls, maksimum ukuran adalah 1.5MB agar muat di database.`);
+          continue;
+        }
+
+        try {
+          const compressedUrl = await compressImage(file, 1200, 1200, 0.75);
+          newAttachments.push({
+            name: file.name,
+            url: compressedUrl
+          });
+        } catch (compressionError) {
+          console.error("Gagal memproses file:", compressionError);
+          alert(`Terjadi kesalahan saat memproses file "${file.name}".`);
+        }
       }
 
-      const reader = new FileReader();
-      const fileLoadPromise = new Promise<{ name: string; url: string }>((resolve) => {
-        reader.onload = (event) => {
-          resolve({
-            name: file.name,
-            url: event.target?.result as string
-          });
-        };
-      });
-      
-      reader.readAsDataURL(file);
-      const attachment = await fileLoadPromise;
-      newAttachments.push(attachment);
+      setEditedAttachments(prev => [...prev, ...newAttachments]);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsCompressingFile(false);
     }
-
-    setEditedAttachments(prev => [...prev, ...newAttachments]);
   };
 
   const deleteCard = async () => {
@@ -1873,8 +1911,17 @@ const CardItem: React.FC<CardItemProps> = ({ card, allLists, users, allowedNavs,
                     {/* Action Bar */}
                     <div className="flex flex-wrap gap-3 relative">
                        <label className="flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-[11px] font-black uppercase text-zinc-300 transition-all cursor-pointer">
-                        <Plus className="w-4 h-4" /> Add
-                        <input type="file" multiple className="hidden" onChange={handleFileChange} accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" />
+                        {isCompressingFile ? (
+                          <>
+                            <span className="w-3 h-3 border-2 border-zinc-400 border-t-transparent rounded-full animate-spin" />
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="w-4 h-4" /> Add
+                          </>
+                        )}
+                        <input type="file" multiple className="hidden" onChange={handleFileChange} accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" disabled={isCompressingFile} />
                       </label>
                       
                       <div className="relative">
@@ -2121,13 +2168,25 @@ const CardItem: React.FC<CardItemProps> = ({ card, allLists, users, allowedNavs,
                     {/* Attachments Section */}
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3 text-zinc-300">
-                          <Paperclip className="w-5 h-5 text-zinc-500" />
-                          <h3 className="text-sm font-black uppercase tracking-widest">Attachments</h3>
+                        <div className="flex flex-col gap-1 text-zinc-300">
+                          <div className="flex items-center gap-3">
+                            <Paperclip className="w-5 h-5 text-zinc-500" />
+                            <h3 className="text-sm font-black uppercase tracking-widest">Attachments</h3>
+                          </div>
+                          <p className="text-[10px] text-zinc-500 font-medium ml-8">Mendukung s.d. 20MB (Gambar otomatis dikompres/dioptimasi)</p>
                         </div>
-                        <label className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-[11px] font-black uppercase text-zinc-300 transition-all cursor-pointer">
-                          Add
-                          <input type="file" multiple className="hidden" onChange={handleFileChange} accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" />
+                        <label className="flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-[11px] font-black uppercase text-zinc-300 transition-all cursor-pointer">
+                          {isCompressingFile ? (
+                            <>
+                              <span className="w-3 h-3 border-2 border-zinc-400 border-t-transparent rounded-full animate-spin" />
+                              Processing...
+                            </>
+                          ) : (
+                            <>
+                              Add
+                            </>
+                          )}
+                          <input type="file" multiple className="hidden" onChange={handleFileChange} accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" disabled={isCompressingFile} />
                         </label>
                       </div>
                       <div className="ml-8 grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useData } from '../contexts/DataContext';
-import { cn } from '../lib/utils';
+import { cn, compressImage } from '../lib/utils';
 import { db, collection, query, onSnapshot, updateDoc, setDoc, doc, addDoc, getDoc, serverTimestamp, deleteDoc, orderBy, handleFirestoreError, OperationType, limit } from '../lib/firebase';
 import KPITemplateManagement from './KPITemplateManagement';
 import { UserProfile, UserRole, Product } from '../types';
@@ -100,20 +100,22 @@ export default function Settings() {
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, setter: (url: string) => void) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, setter: (url: string) => void) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 1024 * 1024) { // 1MB limit for Base64 (Firestore has 1MB doc limit)
-      alert('Ukuran file terlalu besar. Maksimum 1MB.');
+    if (file.size > 20 * 1024 * 1024) {
+      alert('Ukuran file terlalu besar. Maksimum 20MB.');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setter(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    try {
+      const compressedUrl = await compressImage(file, 800, 800, 0.7);
+      setter(compressedUrl);
+    } catch (err) {
+      console.error(err);
+      alert('Gagal memproses gambar.');
+    }
   };
 
   // Search States
@@ -898,18 +900,20 @@ function TeamManagement({ users, onUpdateRole }: { users: UserProfile[], onUpdat
                     id="team-member-photo-input"
                     className="hidden" 
                     accept="image/*"
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
-                      if (file.size > 1024 * 1024) {
-                        alert('File terlalu besar. Maksimum 1MB.');
+                      if (file.size > 20 * 1024 * 1024) {
+                        alert('File terlalu besar. Maksimum 20MB.');
                         return;
                       }
-                      const reader = new FileReader();
-                      reader.onloadend = () => {
-                        setEditingUser(prev => prev ? {...prev, photoURL: reader.result as string} : null);
-                      };
-                      reader.readAsDataURL(file);
+                      try {
+                        const compressedUrl = await compressImage(file, 800, 800, 0.7);
+                        setEditingUser(prev => prev ? {...prev, photoURL: compressedUrl} : null);
+                      } catch (err) {
+                        console.error(err);
+                        alert('Gagal memproses gambar.');
+                      }
                     }}
                   />
                   <p className="mt-2 text-[10px] font-black text-zinc-600 uppercase tracking-widest">Klik untuk ganti foto</p>
@@ -1428,18 +1432,20 @@ function ClinicManagement({ name, address, phone, logoURL, onSave, saving }: {
               ref={fileInputRef} 
               className="hidden" 
               accept="image/*"
-              onChange={(e) => {
+              onChange={async (e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
-                if (file.size > 1024 * 1024) {
-                  alert('Ukuran logo terlalu besar. Maksimum 1MB.');
+                if (file.size > 20 * 1024 * 1024) {
+                  alert('Ukuran logo terlalu besar. Maksimum 20MB.');
                   return;
                 }
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                  setLocalLogo(reader.result as string);
-                };
-                reader.readAsDataURL(file);
+                try {
+                  const compressedUrl = await compressImage(file, 600, 600, 0.7);
+                  setLocalLogo(compressedUrl);
+                } catch (err) {
+                  console.error(err);
+                  alert('Gagal memproses logo.');
+                }
               }}
             />
           </div>

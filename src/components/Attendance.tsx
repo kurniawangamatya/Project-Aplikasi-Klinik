@@ -578,7 +578,7 @@ export default function Attendance() {
              </div>
           </div>
 
-          <div className="bg-zinc-900/50 border border-zinc-900 rounded-[2.5rem] overflow-hidden">
+          <div className="bg-zinc-900/50 border border-zinc-900 rounded-[2.5rem] overflow-hidden overflow-x-auto custom-scrollbar">
             <table className="w-full text-left">
               <thead>
                 <tr className="border-b border-zinc-900 bg-zinc-900/80">

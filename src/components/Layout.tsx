@@ -3,7 +3,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../contexts/ThemeContext';
 import Notifications from './Notifications';
 import Search from './Search';
-import { LayoutDashboard, Users, LogOut, Briefcase, Package, Plus, ChevronDown, Check, Settings, Trash2, Edit3, GripVertical, DollarSign, Clock, BarChart3, Stethoscope, Activity, Menu, X, Target, Sun, Moon } from 'lucide-react';
+import { LayoutDashboard, Users, LogOut, Briefcase, Package, Plus, ChevronDown, Check, Settings, Trash2, Edit3, GripVertical, DollarSign, Clock, BarChart3, Stethoscope, Activity, Menu, X, Target, Sun, Moon, Lock, Unlock } from 'lucide-react';
 import { Board, UserRole } from '../types';
 import { db, doc, onSnapshot, handleFirestoreError, OperationType } from '../lib/firebase';
 import { useData } from '../contexts/DataContext';
@@ -46,7 +46,7 @@ function MobileNavItem({ icon, label, active = false, onClick }: MobileNavItemPr
 export default function Layout({ children, currentTab, setTab, boards, currentBoardId, setCurrentBoardId, onAddBoard, onDeleteBoard, onReorderBoards }: LayoutProps) {
   const { profile, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const { clinicSettings: clinicInfo, rolePermissions, isQuotaExceeded } = useData();
+  const { clinicSettings: clinicInfo, rolePermissions, isQuotaExceeded, isLayoutLocked, toggleLayoutLock } = useData();
   const [isBoardMenuOpen, setIsBoardMenuOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -224,13 +224,30 @@ export default function Layout({ children, currentTab, setTab, boards, currentBo
                   <div className="flex items-center justify-between mb-4 px-2 shrink-0">
                     <span className="text-[10px] font-black text-zinc-500 dark:text-zinc-600 uppercase tracking-widest">Clinic Tools</span>
                     {canManageBoards && (
-                      <button 
-                        onClick={onAddBoard}
-                        className="p-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-400 dark:text-zinc-500 hover:text-blue-500 rounded transition-all"
-                        title="Papan Baru"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                      </button>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={toggleLayoutLock}
+                          className={`p-1 rounded transition-all flex items-center justify-center ${
+                            isLayoutLocked 
+                              ? 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-500' 
+                              : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500'
+                          }`}
+                          title={isLayoutLocked ? "Susunan Terkunci (Klik untuk edit posisi)" : "Susunan Terbuka (Geser posisi bebas - klik setelah selesai untuk kunci)"}
+                        >
+                          {isLayoutLocked ? (
+                            <Lock className="w-3.5 h-3.5" />
+                          ) : (
+                            <Unlock className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                        <button 
+                          onClick={onAddBoard}
+                          className="p-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-400 dark:text-zinc-500 hover:text-blue-500 rounded transition-all"
+                          title="Papan Baru"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     )}
                   </div>
                     )}
@@ -245,12 +262,24 @@ export default function Layout({ children, currentTab, setTab, boards, currentBo
                         <Reorder.Item 
                           key={board.id} 
                           value={board}
+                          dragListener={!isLayoutLocked && canManageBoards}
                           className="group/board relative"
                         >
                           <div className="flex items-center gap-1">
                             {canManageBoards && !isSidebarCollapsed && (
-                              <div className="cursor-grab active:cursor-grabbing text-zinc-700 group-hover/board:text-zinc-500 transition-colors">
-                                <GripVertical className="w-3.5 h-3.5" />
+                              <div 
+                                className={`p-0.5 transition-colors duration-200 ${
+                                  isLayoutLocked 
+                                    ? 'text-zinc-700 opacity-35 cursor-not-allowed' 
+                                    : 'cursor-grab active:cursor-grabbing text-zinc-500 hover:text-blue-500'
+                                }`}
+                                title={isLayoutLocked ? "Susunan Terkunci" : "Seret untuk ubah susunan"}
+                              >
+                                {isLayoutLocked ? (
+                                  <Lock className="w-3 h-3 text-zinc-650" />
+                                ) : (
+                                  <GripVertical className="w-3.5 h-3.5" />
+                                )}
                               </div>
                             )}
                             <button

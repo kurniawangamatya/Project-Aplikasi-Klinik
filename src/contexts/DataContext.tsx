@@ -93,6 +93,8 @@ interface DataContextType {
   isQuotaExceeded: boolean;
   customizationSettings: any;
   updateCustomizationSettings: (settings: any) => Promise<void>;
+  isLayoutLocked: boolean;
+  toggleLayoutLock: () => void;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -118,6 +120,21 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [boards, setBoards] = useState<Board[]>(() => getLocalItem('boards', SEED_BOARDS));
   const [isQuotaExceeded, setIsQuotaExceeded] = useState(false);
   const [customizationSettings, setCustomizationSettings] = useState<any>(() => getLocalItem('customizationSettings', DEFAULT_CUSTOMIZATION));
+  const [isLayoutLocked, setIsLayoutLocked] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('clinic_layout_locked');
+      return saved !== 'false'; // Default value is true (locked)
+    }
+    return true;
+  });
+
+  const toggleLayoutLock = () => {
+    const nextVal = !isLayoutLocked;
+    setIsLayoutLocked(nextVal);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('clinic_layout_locked', String(nextVal));
+    }
+  };
 
   useEffect(() => {
     if (!user) {
@@ -522,8 +539,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     loading: Object.values(loadingStates).some(s => s),
     isQuotaExceeded,
     customizationSettings,
-    updateCustomizationSettings
-  }), [products, users, doctors, nurses, categories, employees, clinicSettings, rolePermissions, todayAttendance, allTodayAttendance, boards, loadingStates, isQuotaExceeded, customizationSettings]);
+    updateCustomizationSettings,
+    isLayoutLocked,
+    toggleLayoutLock
+  }), [products, users, doctors, nurses, categories, employees, clinicSettings, rolePermissions, todayAttendance, allTodayAttendance, boards, loadingStates, isQuotaExceeded, customizationSettings, isLayoutLocked, toggleLayoutLock]);
 
   return (
     <DataContext.Provider value={value}>

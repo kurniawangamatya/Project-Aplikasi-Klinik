@@ -499,9 +499,9 @@ export default function PatientData() {
         createdAt: new Date(visitForm.date),
         createdBy: 'Admin',
         doctorId: visitForm.doctorId,
-        doctorName: selectedDoctor?.displayName || selectedDoctor?.name || '',
+        doctorName: selectedDoctor?.displayName || '',
         nurseId: visitForm.nurseId,
-        nurseName: selectedNurse?.displayName || selectedNurse?.name || '',
+        nurseName: selectedNurse?.displayName || '',
         isDelivery: false,
         tableNumber: '-'
       };
@@ -559,9 +559,9 @@ export default function PatientData() {
         patientName: appointmentForm.patientName,
         patientPhone: appointmentForm.patientPhone,
         doctorId: appointmentForm.doctorId,
-        doctorName: selectedDoctor?.displayName || selectedDoctor?.name || '',
+        doctorName: selectedDoctor?.displayName || '',
         nurseId: appointmentForm.nurseId || '',
-        nurseName: nurses.find(n => n.uid === appointmentForm.nurseId)?.displayName || nurses.find(n => n.uid === appointmentForm.nurseId)?.name || '',
+        nurseName: nurses.find(n => n.uid === appointmentForm.nurseId)?.displayName || '',
         date: new Date(appointmentForm.date),
         startTime: appointmentForm.startTime,
         endTime: appointmentForm.endTime,
@@ -949,7 +949,7 @@ export default function PatientData() {
                      >
                        <option value="">Semua Dokter</option>
                        {doctors.map(d => (
-                         <option key={d.uid} value={d.uid}>{d.displayName || d.name}</option>
+                         <option key={d.uid} value={d.uid}>{d.displayName}</option>
                        ))}
                      </select>
                    </div>
@@ -962,7 +962,7 @@ export default function PatientData() {
                      >
                        <option value="">Semua Perawat</option>
                        {nurses.map(n => (
-                         <option key={n.uid} value={n.uid}>{n.displayName || n.name}</option>
+                         <option key={n.uid} value={n.uid}>{n.displayName}</option>
                        ))}
                      </select>
                    </div>
@@ -1611,7 +1611,7 @@ export default function PatientData() {
                         >
                           <option value="">Pilih Dokter</option>
                           {doctors.map(d => (
-                            <option key={d.uid} value={d.uid}>{d.displayName || d.name}</option>
+                            <option key={d.uid} value={d.uid}>{d.displayName}</option>
                           ))}
                         </select>
                       </div>
@@ -1624,7 +1624,7 @@ export default function PatientData() {
                         >
                           <option value="">Pilih Perawat</option>
                           {nurses.map(n => (
-                            <option key={n.uid} value={n.uid}>{n.displayName || n.name}</option>
+                            <option key={n.uid} value={n.uid}>{n.displayName}</option>
                           ))}
                         </select>
                       </div>
@@ -2380,7 +2380,7 @@ export default function PatientData() {
                           >
                             <option value="">Pilih Dokter</option>
                             {doctors.map(d => (
-                              <option key={d.uid} value={d.uid}>{d.displayName || d.name}</option>
+                              <option key={d.uid} value={d.uid}>{d.displayName}</option>
                             ))}
                           </select>
                         </div>
@@ -2393,7 +2393,7 @@ export default function PatientData() {
                           >
                             <option value="">Pilih Perawat</option>
                             {nurses.map(n => (
-                              <option key={n.uid} value={n.uid}>{n.displayName || n.name}</option>
+                              <option key={n.uid} value={n.uid}>{n.displayName}</option>
                             ))}
                           </select>
                         </div>

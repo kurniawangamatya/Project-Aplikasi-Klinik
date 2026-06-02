@@ -924,7 +924,7 @@ export default function MemberReport({ role, title }: MemberReportProps) {
                 <span className="w-2 h-6 bg-blue-600 rounded-full" />
                 Kontribusi per Kategori Tindakan
               </h3>
-              <div className="overflow-hidden border border-slate-100 rounded-3xl">
+              <div className="overflow-hidden overflow-x-auto border border-slate-100 rounded-3xl custom-scrollbar">
                 <table className="w-full text-left">
                   <thead>
                     <tr className="bg-slate-50 border-b border-slate-100">

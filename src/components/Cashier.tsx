@@ -38,6 +38,7 @@ export default function Cashier() {
   const [activeCategory, setActiveCategory] = useState('Semua');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [customerName, setCustomerName] = useState('');
+  const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
   const [customerPhone, setCustomerPhone] = useState('');
   const [tableNumber, setTableNumber] = useState('');
 
@@ -939,7 +940,7 @@ export default function Cashier() {
       {/* Left Panel: Product Grid */}
       <div className="flex-1 flex flex-col min-w-0 p-6 space-y-6">
         {/* Header Search & Actions */}
-        <div className="flex items-center gap-4 bg-white p-2 rounded-2xl shadow-sm border border-slate-200">
+        <div className="flex flex-col xl:flex-row xl:items-center gap-4 bg-white p-3 xl:p-2 rounded-2xl shadow-sm border border-slate-200">
           <div className="flex-1 relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
             <input 
@@ -950,7 +951,20 @@ export default function Cashier() {
               className="w-full bg-transparent border-none focus:ring-0 pl-12 text-sm text-slate-600 placeholder:text-slate-400"
             />
           </div>
-          <div className="flex items-center gap-2 px-2 border-l border-slate-100">
+          <div className="flex flex-wrap items-center gap-2 pt-2 xl:pt-0 xl:px-2 xl:border-l border-slate-100">
+            {/* Mobile/Tablet Cart Toggle Button */}
+            <button 
+              onClick={() => setIsMobileCartOpen(true)}
+              className="xl:hidden p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-all relative flex items-center justify-center"
+              title="Lihat Keranjang"
+            >
+              <ShoppingCart className="w-5 h-5" />
+              {cart.reduce((sum, item) => sum + item.quantity, 0) > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center animate-pulse">
+                  {cart.reduce((sum, item) => sum + item.quantity, 0)}
+                </span>
+              )}
+            </button>
             <button 
               onClick={() => setViewMode('grid')}
               className={cn("p-2 rounded-lg transition-all", viewMode === 'grid' ? "text-blue-600 bg-blue-50" : "text-slate-400 hover:text-slate-600 hover:bg-slate-50")}
@@ -964,7 +978,7 @@ export default function Cashier() {
               className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition-all"
             ><History className="w-5 h-5" /></button>
           </div>
-          <div className="flex items-center gap-2 px-2 border-l border-slate-100">
+          <div className="flex flex-wrap items-center gap-2 pt-2 xl:pt-0 xl:px-2 xl:border-l border-slate-100">
             <button 
               onClick={() => { 
                 setEditingProduct(null); 
@@ -979,38 +993,41 @@ export default function Cashier() {
                 }); 
                 setActiveModal('settings'); 
               }}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/20"
+              className="flex items-center gap-1.5 px-3 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/20"
             >
-              <Settings className="w-4 h-4" /> Kelola Katalog
+              <Settings className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Kelola Katalog</span><span className="sm:hidden">Katalog</span>
             </button>
             <button 
               onClick={() => setIsGrouped(!isGrouped)}
-              className={cn("flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all", isGrouped ? "bg-blue-600 text-white shadow-lg" : "bg-slate-100 hover:bg-slate-200 text-slate-600")}
+              className={cn("flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all", isGrouped ? "bg-blue-600 text-white shadow-lg" : "bg-slate-100 hover:bg-slate-200 text-slate-600")}
             >
-              <Plus className="w-4 h-4" /> Grouping
+              <Plus className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Grouping</span><span className="sm:hidden">Group</span>
             </button>
             <button 
               onClick={() => setActiveModal('denah')}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold transition-all"
+              className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold transition-all"
             >
-              <Plus className="w-4 h-4" /> Denah
+              <Plus className="w-3.5 h-3.5" /> Denah
             </button>
             <button 
               onClick={saveToPending}
               disabled={cart.length === 0}
               className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all disabled:opacity-30"
+              title="Simpan Pesanan Terbuka"
             >
               <Save className="w-5 h-5" />
             </button>
             <button 
               onClick={() => { if (lastTransaction) setActiveModal('receipt'); else alert('Selesaikan pesanan terlebih dahulu untuk cetak.'); }}
               className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition-all"
+              title="Cetak Nota"
             >
               <Printer className="w-5 h-5" />
             </button>
             <button 
               onClick={() => setActiveModal('settings')}
               className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition-all"
+              title="Pengaturan"
             ><Settings className="w-5 h-5" /></button>
           </div>
         </div>
@@ -1137,7 +1154,10 @@ export default function Cashier() {
       </div>
 
       {/* Right Panel: Side Order */}
-      <div className="w-[420px] bg-white border-l border-slate-200 flex flex-col p-8 space-y-8 overflow-y-auto max-h-screen no-scrollbar shadow-2xl">
+      <div className={cn(
+        "fixed inset-y-0 right-0 z-50 xl:relative xl:z-0 w-[420px] bg-white border-l border-slate-200 flex flex-col p-6 sm:p-8 space-y-6 sm:space-y-8 overflow-y-auto max-h-screen no-scrollbar shadow-2xl transition-all duration-300 xl:translate-x-0 xl:opacity-100 xl:pointer-events-auto",
+        isMobileCartOpen ? "translate-x-0 opacity-100" : "translate-x-full xl:translate-x-0 opacity-0 xl:opacity-100 pointer-events-none xl:pointer-events-auto"
+      )}>
         <header className="flex items-center justify-between shrink-0">
           <div className="space-y-1">
             <h2 className="text-xl font-black text-slate-900 tracking-tight">Pesanan Saat Ini</h2>
@@ -1153,8 +1173,15 @@ export default function Cashier() {
               onClick={() => setIsManualModalOpen(true)}
               className="p-2.5 text-blue-600 hover:bg-blue-50 rounded-xl transition-all border border-blue-100 shadow-sm flex items-center gap-2"
             >
-              <PlusCircle className="w-5 h-5" />
+              <PlusCircle className="w-5 h-5 animate-pulse" />
               <span className="text-[10px] font-black uppercase tracking-widest hidden lg:block">Input Manual</span>
+            </button>
+            <button 
+              onClick={() => setIsMobileCartOpen(false)}
+              className="xl:hidden p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-50 rounded-xl transition-all border border-slate-200"
+              title="Tutup Keranjang"
+            >
+              <X className="w-5 h-5" />
             </button>
           </div>
         </header>
@@ -1585,6 +1612,20 @@ export default function Cashier() {
           </div>
         </div>
       </div>
+
+      {/* Backdrop overlay for mobile/tablet cart */}
+      <AnimatePresence>
+        {isMobileCartOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsMobileCartOpen(false)}
+            className="xl:hidden fixed inset-0 bg-black/50 backdrop-blur-[2px] z-40 cursor-pointer"
+          />
+        )}
+      </AnimatePresence>
+
       {/* Modal Overlay */}
       <AnimatePresence>
         {activeModal && (

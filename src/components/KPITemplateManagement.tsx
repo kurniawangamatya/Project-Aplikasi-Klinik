@@ -390,7 +390,8 @@ export default function KPITemplateManagement() {
                   userEmail: '',
                   taskName: '', 
                   price: 0, 
-                  unit: 'tindakan' 
+                  unit: 'tindakan',
+                  payoutRule: 'standar'
                 }); 
               }}
               className="px-8 py-4 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-650 dark:text-zinc-400 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer"
